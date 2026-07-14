@@ -1,0 +1,7 @@
+engines:
+  cpplint:
+    enabled: true
+
+exclude_paths:
+  - ".pio/**"
+  - ".github/**"
