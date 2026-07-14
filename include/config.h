@@ -18,7 +18,7 @@ constexpr uint8_t MOTOR_PIN = 15;
 
 // ── Modbus ────────────────────────────────────────────────────────────────────
 constexpr uint8_t MODBUS_UNIT_ID = 1;
-constexpr uint32_t MODBUS_BAUD = 9600;
+constexpr uint32_t MODBUS_BAUD = 115200;
 constexpr uint8_t MODBUS_NUM_COILS = 1;
 constexpr uint8_t MODBUS_NUM_REGS = 20;  // 16 display + 3 version + 1 temperature
 
