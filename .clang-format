@@ -1,0 +1,7 @@
+---
+BasedOnStyle: Google
+ColumnLimit: 100
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+InsertBraces: true
