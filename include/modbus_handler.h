@@ -19,6 +19,11 @@ class ModbusHandler
 
   bool getMotorState() const;
 
+  // Returns true when the temperature register holds a valid reading.
+  bool hasTemperature() const;
+  // Temperature in °C (value / 10.0). Call only when hasTemperature() is true.
+  float getTemperature() const;
+
   // Decodes 4 holding registers into an 8-char string + null terminator.
   // dispIdx: 0 or 1  |  lineIdx: 0 (line 1) or 1 (line 2)
   // buf must be at least 9 bytes.

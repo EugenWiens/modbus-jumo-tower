@@ -14,6 +14,7 @@ static MotorControl g_motor;
 
 static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
+static uint16_t s_prevTemp = TEMP_REG_DISABLED;
 
 static void refreshDisplay(uint8_t dispIdx)
 {
@@ -62,10 +63,26 @@ void loop()
     }
   }
 
+  // ── Temperature register (overrides display 1 text when set) ─────────────
+  const uint16_t curTemp = g_modbus.holdingRegs[REG_TEMPERATURE];
+  if (curTemp != s_prevTemp)
+  {
+    s_prevTemp = curTemp;
+    if (g_modbus.hasTemperature())
+    {
+      g_display.showTemperature(0, g_modbus.getTemperature());
+    }
+    else
+    {
+      refreshDisplay(0);  // temperature disabled: restore text
+    }
+    disp1Changed = false;  // already handled
+  }
+
   if (disp1Changed || disp2Changed)
   {
     memcpy(s_prevRegs, g_modbus.holdingRegs, sizeof(s_prevRegs));
-    if (disp1Changed)
+    if (disp1Changed && !g_modbus.hasTemperature())
     {
       refreshDisplay(0);
     }

@@ -7,6 +7,7 @@ ModbusHandler::ModbusHandler() : _modbus(Serial)
 {
   memset(coils, 0, sizeof(coils));
   memset(holdingRegs, 0, sizeof(holdingRegs));
+  holdingRegs[REG_TEMPERATURE] = TEMP_REG_DISABLED;  // disabled until master writes a value
 }
 
 void ModbusHandler::begin()
@@ -35,6 +36,16 @@ void ModbusHandler::poll()
 bool ModbusHandler::getMotorState() const
 {
   return coils[COIL_MOTOR];
+}
+
+bool ModbusHandler::hasTemperature() const
+{
+  return holdingRegs[REG_TEMPERATURE] != TEMP_REG_DISABLED;
+}
+
+float ModbusHandler::getTemperature() const
+{
+  return static_cast<float>(holdingRegs[REG_TEMPERATURE]) / 10.0f;
 }
 
 void ModbusHandler::getDisplayText(uint8_t dispIdx, uint8_t lineIdx, char* buf) const
