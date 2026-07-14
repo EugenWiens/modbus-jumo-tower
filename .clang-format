@@ -1,8 +1,7 @@
 ---
-BasedOnStyle: LLVM
-IndentWidth: 4
+BasedOnStyle: Google
 ColumnLimit: 100
-AllowShortFunctionsOnASingleLine: Inline
-AllowShortIfStatementsOnASingleLine: false
-SpaceAfterCStyleCast: false
-SpacesBeforeTrailingComments: 2
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+InsertBraces: true
