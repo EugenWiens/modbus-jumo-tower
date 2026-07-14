@@ -50,13 +50,13 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `16` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
 | `17` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
 | `18` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
-| `19` | `REG_TEMPERATURE` | R/W | Temperature × 10 in °C (e.g. `235` → 23.5 °C). Write `0xFFFF` to disable and restore text on display 1. |
+| `19` | `REG_TEMPERATURE` | R/W | Temperature × 10 in °C (e.g. `235` → 23.5 °C). Write `0xFFFF` to disable and restore text on both displays. |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
 ### Temperature mode
 
-Writing a value other than `0xFFFF` to register `19` switches **display 1** into temperature mode: the numeric value is rendered as `XX.X °C` and the display text registers (`0`–`7`) are ignored until temperature mode is disabled again by writing `0xFFFF`.
+Writing a value other than `0xFFFF` to register `19` switches **both displays** into temperature mode: the numeric value is rendered as `XX.X °C` and all display text registers (`0`–`15`) are ignored until temperature mode is disabled again by writing `0xFFFF`.
 
 ## License
 
