@@ -14,6 +14,7 @@ class ModbusHandler
 
   ModbusHandler();
   void begin();
+  void prepareVersionString();
   void poll();
 
   bool getMotorState() const;
