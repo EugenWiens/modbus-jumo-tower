@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 #include <Wire.h>
 #include <string.h>
 
@@ -7,6 +8,8 @@
 #include "display_manager.h"
 #include "modbus_handler.h"
 #include "motor_control.h"
+
+Adafruit_USBD_CDC DBG_SERIAL;
 
 static ModbusHandler g_modbus;
 static DisplayManager g_display;
@@ -27,6 +30,8 @@ static void refreshDisplay(uint8_t dispIdx)
 
 void setup()
 {
+  DBG_SERIAL.begin(115200);  // register 2nd CDC interface before stack starts
+
   Wire.setSDA(I2C_SDA_PIN);
   Wire.setSCL(I2C_SCL_PIN);
   Wire.begin();
@@ -34,6 +39,11 @@ void setup()
   g_display.init(DISP1_I2C_ADDR, DISP2_I2C_ADDR);
   g_motor.init(MOTOR_PIN);
   g_modbus.begin();
+
+  DBG_SERIAL.printf("FW %d.%d.%d\r\n",
+                    FIRMWARE_VERSION_MAJOR,
+                    FIRMWARE_VERSION_MINOR,
+                    FIRMWARE_VERSION_PATCH);
 }
 
 void loop()

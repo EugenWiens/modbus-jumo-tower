@@ -42,3 +42,9 @@ constexpr uint8_t REG_VERSION_PATCH = 18;
 // Write 0xFFFF to disable temperature mode and restore text display.
 constexpr uint8_t  REG_TEMPERATURE   = 19;
 constexpr uint16_t TEMP_REG_DISABLED = 0xFFFFU;
+
+// ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
+#ifdef USE_TINYUSB
+#include <Adafruit_TinyUSB.h>
+extern Adafruit_USBD_CDC DBG_SERIAL;
+#endif
