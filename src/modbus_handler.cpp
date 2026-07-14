@@ -14,6 +14,17 @@ void ModbusHandler::begin()
   _modbus.configureCoils(coils, MODBUS_NUM_COILS);
   _modbus.configureHoldingRegisters(holdingRegs, MODBUS_NUM_REGS);
   _modbus.begin(MODBUS_UNIT_ID, MODBUS_BAUD);
+
+  prepareVersionString();
+}
+
+void ModbusHandler::prepareVersionString()
+{
+  // Store each version component as a separate uint16_t register.
+  // Tag "01.02.03" → REG_VERSION_MAJOR=1, REG_VERSION_MINOR=2, REG_VERSION_PATCH=3.
+  holdingRegs[REG_VERSION_MAJOR] = static_cast<uint16_t>(FIRMWARE_VERSION_MAJOR);
+  holdingRegs[REG_VERSION_MINOR] = static_cast<uint16_t>(FIRMWARE_VERSION_MINOR);
+  holdingRegs[REG_VERSION_PATCH] = static_cast<uint16_t>(FIRMWARE_VERSION_PATCH);
 }
 
 void ModbusHandler::poll()

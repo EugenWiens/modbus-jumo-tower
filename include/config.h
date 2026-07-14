@@ -20,7 +20,7 @@ constexpr uint8_t MOTOR_PIN = 15;
 constexpr uint8_t MODBUS_UNIT_ID = 1;
 constexpr uint32_t MODBUS_BAUD = 9600;
 constexpr uint8_t MODBUS_NUM_COILS = 1;
-constexpr uint8_t MODBUS_NUM_REGS = 16;
+constexpr uint8_t MODBUS_NUM_REGS = 19;  // 16 display + 3 version
 
 // Coil indices
 constexpr uint8_t COIL_MOTOR = 0;
@@ -30,3 +30,9 @@ constexpr uint8_t REG_DISP1_LINE1 = 0;
 constexpr uint8_t REG_DISP1_LINE2 = 4;
 constexpr uint8_t REG_DISP2_LINE1 = 8;
 constexpr uint8_t REG_DISP2_LINE2 = 12;
+
+// Version registers (FC03, read-only by convention).
+// Each holds one numeric component of the firmware version tag (e.g. "01.02.03" → 1, 2, 3).
+constexpr uint8_t REG_VERSION_MAJOR = 16;
+constexpr uint8_t REG_VERSION_MINOR = 17;
+constexpr uint8_t REG_VERSION_PATCH = 18;
