@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "display_manager.h"
 
 #include <Adafruit_SSD1306.h>

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 #include "motor_control.h"
 
 void MotorControl::init(uint8_t pin)
