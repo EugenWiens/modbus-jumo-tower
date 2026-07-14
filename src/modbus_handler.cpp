@@ -12,6 +12,7 @@ ModbusHandler::ModbusHandler() : _modbus(Serial)
 
 void ModbusHandler::begin()
 {
+  Serial.begin(MODBUS_BAUD);  // USB CDC-ACM – baud is advisory for USB but required by the library
   _modbus.configureCoils(coils, MODBUS_NUM_COILS);
   _modbus.configureHoldingRegisters(holdingRegs, MODBUS_NUM_REGS);
   _modbus.begin(MODBUS_UNIT_ID, MODBUS_BAUD);
