@@ -3,6 +3,7 @@
 
 #include <Adafruit_SSD1306.h>
 #include <Wire.h>
+#include <stdio.h>
 
 #include "config.h"
 
@@ -36,5 +37,31 @@ void DisplayManager::update(uint8_t idx, const char* line1, const char* line2)
   s_disp[idx].print(line1);
   s_disp[idx].setCursor(0, 16);
   s_disp[idx].print(line2);
+  s_disp[idx].display();
+}
+
+void DisplayManager::showTemperature(uint8_t idx, float tempC)
+{
+  if (idx > 1)
+  {
+    return;
+  }
+
+  // Format as "xx.x\xB0C" (degree symbol + C)
+  char buf[12];
+  snprintf(buf, sizeof(buf), "%.1f\xB0C", static_cast<double>(tempC));
+
+  s_disp[idx].clearDisplay();
+  s_disp[idx].setTextColor(SSD1306_WHITE);
+  s_disp[idx].setTextSize(2);
+
+  // Centre horizontally and vertically using measured text bounds
+  int16_t bx, by;
+  uint16_t bw, bh;
+  s_disp[idx].getTextBounds(buf, 0, 0, &bx, &by, &bw, &bh);
+  s_disp[idx].setCursor(
+      static_cast<int16_t>((DISP_WIDTH  - bw) / 2),
+      static_cast<int16_t>((DISP_HEIGHT - bh) / 2));
+  s_disp[idx].print(buf);
   s_disp[idx].display();
 }

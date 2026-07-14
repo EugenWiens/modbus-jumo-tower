@@ -20,7 +20,7 @@ constexpr uint8_t MOTOR_PIN = 15;
 constexpr uint8_t MODBUS_UNIT_ID = 1;
 constexpr uint32_t MODBUS_BAUD = 9600;
 constexpr uint8_t MODBUS_NUM_COILS = 1;
-constexpr uint8_t MODBUS_NUM_REGS = 19;  // 16 display + 3 version
+constexpr uint8_t MODBUS_NUM_REGS = 20;  // 16 display + 3 version + 1 temperature
 
 // Coil indices
 constexpr uint8_t COIL_MOTOR = 0;
@@ -36,3 +36,9 @@ constexpr uint8_t REG_DISP2_LINE2 = 12;
 constexpr uint8_t REG_VERSION_MAJOR = 16;
 constexpr uint8_t REG_VERSION_MINOR = 17;
 constexpr uint8_t REG_VERSION_PATCH = 18;
+
+// Temperature register (FC03 read / FC06 write, display 1).
+// Value = temperature × 10  (e.g. 235 → 23.5 °C).
+// Write 0xFFFF to disable temperature mode and restore text display.
+constexpr uint8_t  REG_TEMPERATURE   = 19;
+constexpr uint16_t TEMP_REG_DISABLED = 0xFFFFU;
