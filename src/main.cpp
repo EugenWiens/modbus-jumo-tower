@@ -63,7 +63,7 @@ void loop()
     }
   }
 
-  // ── Temperature register (overrides display 1 text when set) ─────────────
+  // ── Temperature register (overrides both displays when set) ───────────────
   const uint16_t curTemp = g_modbus.holdingRegs[REG_TEMPERATURE];
   if (curTemp != s_prevTemp)
   {
@@ -71,12 +71,15 @@ void loop()
     if (g_modbus.hasTemperature())
     {
       g_display.showTemperature(0, g_modbus.getTemperature());
+      g_display.showTemperature(1, g_modbus.getTemperature());
     }
     else
     {
       refreshDisplay(0);  // temperature disabled: restore text
+      refreshDisplay(1);
     }
     disp1Changed = false;  // already handled
+    disp2Changed = false;
   }
 
   if (disp1Changed || disp2Changed)
@@ -86,7 +89,7 @@ void loop()
     {
       refreshDisplay(0);
     }
-    if (disp2Changed)
+    if (disp2Changed && !g_modbus.hasTemperature())
     {
       refreshDisplay(1);
     }
