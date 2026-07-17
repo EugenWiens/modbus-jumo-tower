@@ -18,6 +18,8 @@ static MotorControl g_motor;
 static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
 static uint16_t s_prevTemp = TEMP_REG_DISABLED;
+static uint16_t s_ledToggleLoopCount = 0;
+static bool s_prevLedState = false;
 
 static void refreshDisplay(uint8_t dispIdx)
 {
@@ -28,20 +30,46 @@ static void refreshDisplay(uint8_t dispIdx)
     g_display.update(dispIdx, line1, line2);
 }
 
+static void scanI2cBus()
+{
+    bool foundDevice = false;
+    for (uint8_t addr = 0x08; addr < 0x78; addr++)
+    {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission() == 0)
+        {
+            DBG_SERIAL.printf("I2C device: 0x%02X\r\n", addr);
+            foundDevice = true;
+        }
+    }
+
+    if (!foundDevice)
+    {
+        DBG_SERIAL.println("I2C: no devices found");
+    }
+}
+
 void setup()
 {
     DBG_SERIAL.begin(115200);  // register 2nd CDC interface before stack starts
+    delay(2000);
     DBG_SERIAL.println("Starting JUMO Tower");
 
     Wire.setSDA(I2C_SDA_PIN);
     Wire.setSCL(I2C_SCL_PIN);
     Wire.begin();
     DBG_SERIAL.printf("I2C: SDA=GPIO %u, SCL=GPIO %u\r\n", I2C_SDA_PIN, I2C_SCL_PIN);
+    scanI2cBus();
 
-    g_display.init(DISP1_I2C_ADDR, DISP2_I2C_ADDR);
-    DBG_SERIAL.printf("Displays initialized: 0x%02X, 0x%02X\r\n", DISP1_I2C_ADDR, DISP2_I2C_ADDR);
+    g_display.init(DISP_I2C_ADDRS);
+    g_display.showLargeText(0, 3, "Hallo", "Harald");
+    DBG_SERIAL.printf("Displays initialized:\r\n");
     g_motor.init(MOTOR_PIN);
     DBG_SERIAL.printf("Motor initialized: GPIO %u\r\n", MOTOR_PIN);
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
+
     g_modbus.begin();
     DBG_SERIAL.printf("Modbus initialized: unit=%u, baud=%lu\r\n", MODBUS_UNIT_ID,
                       static_cast<unsigned long>(MODBUS_BAUD));
@@ -53,6 +81,13 @@ void setup()
 void loop()
 {
     g_modbus.poll();
+
+    if (++s_ledToggleLoopCount == 10000U)
+    {
+        s_ledToggleLoopCount = 0;
+        s_prevLedState = !s_prevLedState;
+        digitalWrite(LED_BUILTIN, s_prevLedState ? HIGH : LOW);
+    }
 
     // ── Motor coil ────────────────────────────────────────────────────────────
     const bool curMotor = g_modbus.getMotorState();
