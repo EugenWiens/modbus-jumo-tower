@@ -1,7 +1,7 @@
 # modbus-jumo-tower
 
 Firmware for a **Raspberry Pi Pico (RP2040)** that acts as a Modbus RTU slave over USB CDC-ACM.
-It drives two SSD1306 OLED displays and a motor output, and can display a temperature value sent by the Modbus master.
+It drives two SH1106 OLED displays and a motor output, and can display a temperature value sent by the Modbus master.
 
 The USB device enumerates as **JUMO / JUMO Tower**.
 
@@ -10,11 +10,12 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 | Component | Detail |
 |-----------|--------|
 | MCU | Raspberry Pi Pico (RP2040) |
-| Display 1 | SSD1306 128×64 OLED, I²C address `0x3C` |
-| Display 2 | SSD1306 128×64 OLED, I²C address `0x3D` |
+| Display 1 | SH1106 128×64 OLED, I²C address `0x3C` |
+| Display 2 | SH1106 128×64 OLED, I²C address `0x3D` |
 | I²C bus | SDA = GPIO 4, SCL = GPIO 5 |
 | Motor output | GPIO 16 (digital on/off) |
 | Modbus transport | USB CDC-ACM (`/dev/ttyACM0`), 115200 baud |
+| Debug output | Second USB CDC-ACM interface (`/dev/ttyACM1`), 115200 baud |
 
 ## Wiring
 
@@ -38,7 +39,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
   SCL ───┼──┬────────────────────────────────┐   │
          │  │                                │   │
   ┌──────┴──┴──────────┐              ┌──────┴───┴──────────┐
-  │     SSD1306 #1     │              │     SSD1306 #2      │
+  │      SH1106 #1     │              │      SH1106 #2       │
   ├────────────────────┤              ├─────────────────────┤
   │ SDA                │              │ SDA                 │
   │ SCL                │              │ SCL                 │
@@ -58,18 +59,18 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 
 | Pico pin | GPIO | Signal | Connects to |
 |----------|------|--------|-------------|
-| 6 | GP4 | I²C SDA | SDA on both SSD1306 modules |
-| 7 | GP5 | I²C SCL | SCL on both SSD1306 modules |
+| 6 | GP4 | I²C SDA | SDA on both SH1106 modules |
+| 7 | GP5 | I²C SCL | SCL on both SH1106 modules |
 | 21 | GP16 | Motor OUT | Base/Gate of driver transistor / relay IN |
-| 36 | 3V3 | Power | VCC on both SSD1306 modules |
+| 36 | 3V3 | Power | VCC on both SH1106 modules |
 | 38 | GND | Ground | GND on all peripherals |
 
 ### Notes
 
-- **I²C address selection:** SSD1306 address is set by the `SA0` pad — tie to **GND** for `0x3C`, to **3V3** for `0x3D`.
-- **Pull-up resistors:** most SSD1306 breakout boards include 4.7 kΩ pull-ups on SDA/SCL. If using bare modules, add them externally.
+- **I²C address selection:** SH1106 address is set by the `SA0` pad — tie to **GND** for `0x3C`, to **3V3** for `0x3D`.
+- **Pull-up resistors:** most SH1106 breakout boards include 4.7 kΩ pull-ups on SDA/SCL. If using bare modules, add them externally.
 - **Motor driver:** GP16 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
-- **Power:** the Pico's 3V3 rail can supply ≈ 300 mA. For larger loads, supply SSD1306 VCC separately from VSYS/VBUS.
+- **Power:** the Pico's 3V3 rail can supply ≈ 300 mA. For larger loads, supply SH1106 VCC separately from VSYS/VBUS.
 
 ## Build
 
@@ -111,7 +112,11 @@ The firmware version is injected automatically from the latest Git tag via `get_
 
 ### Temperature mode
 
-Writing a value other than `0xFFFF` to register `19` switches **both displays** into temperature mode: the numeric value is rendered as `XX.X °C` and all display text registers (`0`–`15`) are ignored until temperature mode is disabled again by writing `0xFFFF`.
+Writing a value other than `0xFFFF` to register `19` switches **both displays** into temperature mode: the numeric value is rendered as `XX.XC` and all display text registers (`0`–`15`) are ignored until temperature mode is disabled again by writing `0xFFFF`.
+
+## Debug output
+
+The second USB CDC-ACM interface (`/dev/ttyACM1`) provides startup, I²C-scan, display-update, motor-state, and temperature-mode messages at 115200 baud. It is separate from the Modbus interface on `/dev/ttyACM0`.
 
 ## License
 
