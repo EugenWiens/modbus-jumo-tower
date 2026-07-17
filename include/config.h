@@ -7,9 +7,8 @@
 constexpr uint8_t I2C_SDA_PIN = 4;
 constexpr uint8_t I2C_SCL_PIN = 5;
 
-// ── SSD1306 Displays ──────────────────────────────────────────────────────────
-constexpr uint8_t DISP1_I2C_ADDR = 0x3C;
-constexpr uint8_t DISP2_I2C_ADDR = 0x3D;
+// ── SH1106 Displays ───────────────────────────────────────────────────────────
+constexpr uint8_t DISP_I2C_ADDRS[2] = {0x3C, 0x3D};
 constexpr uint8_t DISP_WIDTH = 128;
 constexpr uint8_t DISP_HEIGHT = 64;
 
