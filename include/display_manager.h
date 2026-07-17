@@ -5,14 +5,14 @@
 
 class DisplayManager
 {
- public:
-  void init(uint8_t addr1, uint8_t addr2);
+   public:
+    void init(uint8_t addr1, uint8_t addr2);
 
-  // idx: 0 = Display 1 (0x3C), 1 = Display 2 (0x3D)
-  // line1/line2: null-terminated strings, max 8 chars each
-  void update(uint8_t idx, const char* line1, const char* line2);
+    // idx: 0 = Display 1 (0x3C), 1 = Display 2 (0x3D)
+    // line1/line2: null-terminated strings, max 8 chars each
+    void update(uint8_t idx, const char* line1, const char* line2);
 
-  // Shows temperature in °C centred on the display in large font.
-  // Replaces normal text mode; call update() to return to text mode.
-  void showTemperature(uint8_t idx, float tempC);
+    // Shows temperature in °C centred on the display in large font.
+    // Replaces normal text mode; call update() to return to text mode.
+    void showTemperature(uint8_t idx, float tempC);
 };
