@@ -20,22 +20,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 ## Wiring
 
 ### Schematic
-
-```
-Raspberry Pi Pico               ST7735 #1      ST7735 #2      ST7735 #3
------------------               ---------      ---------      ---------
-GP13 (pin 17) ----------------- CS
-GP14 (pin 19) --------------------------------- CS
-GP15 (pin 20) ------------------------------------------------ CS
-GP18 (pin 24) ----------------- SCK ----------- SCK ----------- SCK
-GP19 (pin 25) ----------------- MOSI/SDA ------ MOSI/SDA ------ MOSI/SDA
-GP20 (pin 26) ----------------- DC/A0 --------- DC/A0 --------- DC/A0
-GP21 (pin 27) ----------------- RST/RES ------- RST/RES ------- RST/RES
-3V3  (pin 36) ----------------- VCC ----------- VCC ----------- VCC
-GND  (pin 38) ----------------- GND ----------- GND ----------- GND
-
-GP16 (pin 21) ----------------- motor driver input
-```
+![Schematic](schematic.drawio.png)
 
 ### Pin assignment
 
