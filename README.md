@@ -13,7 +13,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 | Display 1 | SSD1306 128×64 OLED, I²C address `0x3C` |
 | Display 2 | SSD1306 128×64 OLED, I²C address `0x3D` |
 | I²C bus | SDA = GPIO 4, SCL = GPIO 5 |
-| Motor output | GPIO 15 (digital on/off) |
+| Motor output | GPIO 16 (digital on/off) |
 | Modbus transport | USB CDC-ACM (`/dev/ttyACM0`), 115200 baud |
 
 ## Wiring
@@ -31,7 +31,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
   SDA ────◄──────────────────────◄─┤ GP4  (pin  6)   │
   SCL ────◄──────────────────────◄─┤ GP5  (pin  7)   │
                                    │                 │
-  Motor ──◄──────────────────────◄─┤ GP15 (pin 20)   │
+  Motor ──◄──────────────────────◄─┤ GP16 (pin 21)   │
                                    └─────────────────┘
 
   SDA ───┬───────────────────────────────────────┐
@@ -60,7 +60,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 |----------|------|--------|-------------|
 | 6 | GP4 | I²C SDA | SDA on both SSD1306 modules |
 | 7 | GP5 | I²C SCL | SCL on both SSD1306 modules |
-| 20 | GP15 | Motor OUT | Base/Gate of driver transistor / relay IN |
+| 21 | GP16 | Motor OUT | Base/Gate of driver transistor / relay IN |
 | 36 | 3V3 | Power | VCC on both SSD1306 modules |
 | 38 | GND | Ground | GND on all peripherals |
 
@@ -68,7 +68,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 
 - **I²C address selection:** SSD1306 address is set by the `SA0` pad — tie to **GND** for `0x3C`, to **3V3** for `0x3D`.
 - **Pull-up resistors:** most SSD1306 breakout boards include 4.7 kΩ pull-ups on SDA/SCL. If using bare modules, add them externally.
-- **Motor driver:** GP15 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
+- **Motor driver:** GP16 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
 - **Power:** the Pico's 3V3 rail can supply ≈ 300 mA. For larger loads, supply SSD1306 VCC separately from VSYS/VBUS.
 
 ## Build

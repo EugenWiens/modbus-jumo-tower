@@ -14,7 +14,7 @@ constexpr uint8_t DISP_WIDTH = 128;
 constexpr uint8_t DISP_HEIGHT = 64;
 
 // ── Motor GPIO ────────────────────────────────────────────────────────────────
-constexpr uint8_t MOTOR_PIN = 15;
+constexpr uint8_t MOTOR_PIN = 16;
 
 // ── Modbus ────────────────────────────────────────────────────────────────────
 constexpr uint8_t MODBUS_UNIT_ID = 1;
@@ -40,7 +40,7 @@ constexpr uint8_t REG_VERSION_PATCH = 18;
 // Temperature register (FC03 read / FC06 write, display 1).
 // Value = temperature × 10  (e.g. 235 → 23.5 °C).
 // Write 0xFFFF to disable temperature mode and restore text display.
-constexpr uint8_t  REG_TEMPERATURE   = 19;
+constexpr uint8_t REG_TEMPERATURE = 19;
 constexpr uint16_t TEMP_REG_DISABLED = 0xFFFFU;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
