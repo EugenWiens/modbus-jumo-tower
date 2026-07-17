@@ -25,7 +25,7 @@ class ModbusHandler
     float getTemperature() const;
 
     // Decodes 4 holding registers into an 8-char string + null terminator.
-    // dispIdx: 0 or 1  |  lineIdx: 0 (line 1) or 1 (line 2)
+    // dispIdx: 0, 1, or 2  |  lineIdx: 0 (line 1) or 1 (line 2)
     // buf must be at least 9 bytes.
     void getDisplayText(uint8_t dispIdx, uint8_t lineIdx, char* buf) const;
 

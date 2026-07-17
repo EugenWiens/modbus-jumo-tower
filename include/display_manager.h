@@ -6,9 +6,9 @@
 class DisplayManager
 {
    public:
-    void init(const uint8_t (&addrs)[2]);
+    void init();
 
-    // idx: 0 = Display 1 (0x3C), 1 = Display 2 (0x3D)
+    // idx: 0 = Display 1, 1 = Display 2, 2 = Display 3
     // line1/line2: null-terminated strings, max 8 chars each
     void update(uint8_t idx, const char* line1, const char* line2);
 
