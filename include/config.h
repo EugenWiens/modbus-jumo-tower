@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // ── ST7735 Displays (shared SPI bus) ──────────────────────────────────────────
-constexpr uint8_t DISPLAY_COUNT = 2;
+constexpr uint8_t DISPLAY_COUNT = 3;
 constexpr uint8_t MAX_DISPLAY_COUNT = 3;  // for array sizing, not used in code
 constexpr uint8_t DISP_WIDTH = 160;
 constexpr uint8_t DISP_HEIGHT = 128;
