@@ -20,7 +20,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 ## Wiring
 
 ### Schematic
-![Schematic](schematic.drawio.png)
+![Schematic](schematic.png)
 
 ### Pin assignment
 
@@ -40,7 +40,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 ### Notes
 
 - **SPI connections:** connect `SCK`, `MOSI` (sometimes labelled `SDA`), `DC` (sometimes `A0`) and `RST`/`RES` to all three modules. Connect each module's `CS` only to its assigned Pico GPIO. `MISO` is not required.
-- **Display variant:** the firmware uses the `INITR_BLACKTAB` initialization for common 1.8-inch 128x160 modules. If the visible image is shifted, adjust `ST7735_INIT_OPTION` in [include/config.h](include/config.h) for the tab variant of the module.
+- **Display variant:** the firmware uses the `INITR_GREENTAB` initialization for common 1.8-inch 128x160 modules. If the visible image is shifted, adjust `ST7735_INIT_OPTION` in [include/config.h](include/config.h) for the tab variant of the module.
 - **Motor driver:** GP16 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
 - **Power:** three backlit TFT modules can exceed the current available from the Pico's 3V3 rail. Use a sufficiently rated 3.3 V supply when needed and always connect its ground to Pico GND.
 
