@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <Adafruit_TinyUSB.h>
 #include <Arduino.h>
-#include <Wire.h>
 #include <string.h>
 
 #include "config.h"
@@ -17,7 +16,8 @@ static MotorControl g_motor;
 
 static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
-static uint16_t s_prevTemp = TEMP_REG_DISABLED;
+static uint16_t s_prevTempHigh = TEMP_REG_DISABLED;
+static uint16_t s_prevTempLow = TEMP_REG_DISABLED;
 static uint16_t s_ledToggleLoopCount = 0;
 static bool s_prevLedState = false;
 
@@ -30,40 +30,19 @@ static void refreshDisplay(uint8_t dispIdx)
     g_display.update(dispIdx, line1, line2);
 }
 
-static void scanI2cBus()
-{
-    bool foundDevice = false;
-    for (uint8_t addr = 0x08; addr < 0x78; addr++)
-    {
-        Wire.beginTransmission(addr);
-        if (Wire.endTransmission() == 0)
-        {
-            DBG_SERIAL.printf("I2C device: 0x%02X\r\n", addr);
-            foundDevice = true;
-        }
-    }
-
-    if (!foundDevice)
-    {
-        DBG_SERIAL.println("I2C: no devices found");
-    }
-}
-
 void setup()
 {
     DBG_SERIAL.begin(115200);  // register 2nd CDC interface before stack starts
     delay(2000);
     DBG_SERIAL.println("Starting JUMO Tower");
 
-    Wire.setSDA(I2C_SDA_PIN);
-    Wire.setSCL(I2C_SCL_PIN);
-    Wire.begin();
-    DBG_SERIAL.printf("I2C: SDA=GPIO %u, SCL=GPIO %u\r\n", I2C_SDA_PIN, I2C_SCL_PIN);
-    scanI2cBus();
-
-    g_display.init(DISP_I2C_ADDRS);
-    g_display.showLargeText(0, 3, "Hallo", "Harald");
-    DBG_SERIAL.printf("Displays initialized:\r\n");
+    g_display.init();
+    g_display.showLargeText(0, 4, "Hallo", "Harald");
+    char firmwareVersion[16];
+    snprintf(firmwareVersion, sizeof(firmwareVersion), "%d.%d.%d", FIRMWARE_VERSION_MAJOR,
+             FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH);
+    g_display.showLargeText(1, 2, "SW Version", firmwareVersion);
+    DBG_SERIAL.printf("Displays initialized: %u ST7735 TFTs\r\n", DISPLAY_COUNT);
     g_motor.init(MOTOR_PIN);
     DBG_SERIAL.printf("Motor initialized: GPIO %u\r\n", MOTOR_PIN);
 
@@ -99,54 +78,66 @@ void loop()
     }
 
     // ── Display holding registers ─────────────────────────────────────────────
-    bool disp1Changed = false;
-    bool disp2Changed = false;
-    for (uint8_t i = 0; i < 8; i++)
+    bool dispChanged[DISPLAY_COUNT] = {false};
+    for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
     {
-        if (g_modbus.holdingRegs[i] != s_prevRegs[i])
+        const uint8_t firstReg = DISPLAY_REG_BASES[dispIdx];
+        for (uint8_t regOffset = 0; regOffset < 8; regOffset++)
         {
-            disp1Changed = true;
-        }
-        if (g_modbus.holdingRegs[i + 8] != s_prevRegs[i + 8])
-        {
-            disp2Changed = true;
+            const uint8_t regIdx = static_cast<uint8_t>(firstReg + regOffset);
+            if (g_modbus.holdingRegs[regIdx] != s_prevRegs[regIdx])
+            {
+                dispChanged[dispIdx] = true;
+            }
         }
     }
 
-    // ── Temperature register (overrides both displays when set) ───────────────
-    const uint16_t curTemp = g_modbus.holdingRegs[REG_TEMPERATURE];
-    if (curTemp != s_prevTemp)
+    // ── Temperature registers (overrides all displays when set) ──────────────
+    const uint16_t curTempHigh = g_modbus.holdingRegs[REG_TEMPERATURE_HIGH];
+    const uint16_t curTempLow = g_modbus.holdingRegs[REG_TEMPERATURE_LOW];
+    if (curTempHigh != s_prevTempHigh || curTempLow != s_prevTempLow)
     {
-        s_prevTemp = curTemp;
+        s_prevTempHigh = curTempHigh;
+        s_prevTempLow = curTempLow;
         if (g_modbus.hasTemperature())
         {
             DBG_SERIAL.printf("Temperature mode: %.1f C\r\n",
                               static_cast<double>(g_modbus.getTemperature()));
-            g_display.showTemperature(0, g_modbus.getTemperature());
-            g_display.showTemperature(1, g_modbus.getTemperature());
+            for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+            {
+                g_display.showTemperature(dispIdx, g_modbus.getTemperature());
+            }
         }
         else
         {
             DBG_SERIAL.println("Temperature mode: disabled");
-            refreshDisplay(0);  // temperature disabled: restore text
-            refreshDisplay(1);
+            for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+            {
+                refreshDisplay(dispIdx);
+            }
         }
-        disp1Changed = false;  // already handled
-        disp2Changed = false;
+        for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+        {
+            dispChanged[dispIdx] = false;
+        }
     }
 
-    if (disp1Changed || disp2Changed)
+    bool anyDisplayChanged = false;
+    for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+    {
+        anyDisplayChanged = anyDisplayChanged || dispChanged[dispIdx];
+    }
+
+    if (anyDisplayChanged)
     {
         memcpy(s_prevRegs, g_modbus.holdingRegs, sizeof(s_prevRegs));
-        if (disp1Changed && !g_modbus.hasTemperature())
+        for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
         {
-            refreshDisplay(0);
-            DBG_SERIAL.println("Display 1: text updated");
-        }
-        if (disp2Changed && !g_modbus.hasTemperature())
-        {
-            refreshDisplay(1);
-            DBG_SERIAL.println("Display 2: text updated");
+            if (dispChanged[dispIdx] && !g_modbus.hasTemperature())
+            {
+                refreshDisplay(dispIdx);
+                DBG_SERIAL.printf("Display %u: text updated\r\n", dispIdx + 1U);
+            }
         }
     }
 }
