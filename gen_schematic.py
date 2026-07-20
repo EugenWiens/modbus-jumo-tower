@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate schematic.drawio.png – a clear connection diagram for the JUMO Tower."""
+"""Generate schematic.drawio.png – clear connection diagram for the JUMO Tower (v2)."""
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -8,354 +8,336 @@ FONT_REGULAR = "/usr/share/fonts/adwaita-sans-fonts/AdwaitaSans-Regular.ttf"
 FONT_BOLD    = "/usr/share/fonts/google-droid-sans-fonts/DroidSans-Bold.ttf"
 
 def font(size, bold=False):
-    path = FONT_BOLD if bold else FONT_REGULAR
-    return ImageFont.truetype(path, size)
+    return ImageFont.truetype(FONT_BOLD if bold else FONT_REGULAR, size)
 
 # ── Colours ──────────────────────────────────────────────────────────────────
-BG           = (255, 255, 255)
-BOX_PICO     = (210, 225, 245)
-BOX_PICO_BD  = (60,  90,  160)
-BOX_DISP     = (210, 240, 220)
-BOX_DISP_BD  = (40,  130, 70)
-BOX_MOTOR    = (255, 235, 200)
-BOX_MOTOR_BD = (180, 100, 20)
-BOX_NOTE     = (250, 245, 200)
-BOX_NOTE_BD  = (160, 140, 40)
+BG           = (250, 250, 252)
+BOX_PICO     = (215, 228, 248)
+BOX_PICO_BD  = (50,  80,  160)
+BOX_DISP     = (212, 242, 222)
+BOX_DISP_BD  = (35,  125, 65)
+BOX_MOTOR    = (255, 238, 205)
+BOX_MOTOR_BD = (175, 100, 15)
+BOX_NOTE     = (252, 248, 210)
+BOX_NOTE_BD  = (150, 135, 30)
 
-C_SCK   = (30,  90,  200)   # SPI clock
-C_MOSI  = (0,   160, 100)   # SPI data
-C_DC    = (140, 40,  140)   # data/command
-C_RST   = (180, 60,  60)    # reset
-C_PWR   = (200, 30,  30)    # VCC
-C_GND   = (60,  60,  60)    # GND
-C_CS1   = (30,  140, 190)   # chip-select 1
-C_CS2   = (20,  100, 160)   # chip-select 2
-C_CS3   = (10,  60,  130)   # chip-select 3
-C_MOTOR = (180, 80,  0)     # motor signal
-TXT     = (20,  20,  20)
+C_SCK   = (20,  80,  200)
+C_MOSI  = (0,   150, 90)
+C_DC    = (130, 30,  140)
+C_RST   = (175, 50,  50)
+C_PWR   = (200, 20,  20)
+C_GND   = (55,  55,  55)
+C_CS1   = (0,   155, 200)
+C_CS2   = (0,   110, 170)
+C_CS3   = (0,   65,  135)
+C_MOTOR = (185, 85,  0)
+TXT     = (18,  18,  18)
 
-W = 1800
-H = 960
-SCALE = 2          # final 2× upscaling for crispness
-
+# ── Canvas ───────────────────────────────────────────────────────────────────
+W, H = 1700, 1000
+SCALE = 2
 img = Image.new("RGB", (W * SCALE, H * SCALE), BG)
 d   = ImageDraw.Draw(img)
 
 def s(v):
-    """Scale a coordinate or list/tuple of coordinates."""
     if isinstance(v, (list, tuple)):
         return type(v)(s(i) for i in v)
-    return v * SCALE
+    return int(v * SCALE)
 
-def rect(x1, y1, x2, y2, fill, outline, radius=8):
-    d.rounded_rectangle(
-        [s(x1), s(y1), s(x2), s(y2)],
-        radius=s(radius), fill=fill, outline=outline, width=s(2)
-    )
+def rect(x1, y1, x2, y2, fill, bd, r=8):
+    d.rounded_rectangle([s(x1), s(y1), s(x2), s(y2)],
+                        radius=s(r), fill=fill, outline=bd, width=s(2))
 
-def text(x, y, txt, sz=13, bold=False, colour=TXT, anchor="la"):
-    d.text((s(x), s(y)), txt, fill=colour, font=font(s(sz), bold), anchor=anchor)
+def txt(x, y, t, sz=12, bold=False, c=TXT, anc="lt"):
+    d.text((s(x), s(y)), t, fill=c, font=font(s(sz), bold), anchor=anc)
 
-def hline(x1, x2, y, colour, width=2):
-    d.line([(s(x1), s(y)), (s(x2), s(y))], fill=colour, width=s(width))
+def hl(x1, x2, y, c, w=2):
+    d.line([(s(x1), s(y)), (s(x2), s(y))], fill=c, width=s(w))
 
-def vline(x, y1, y2, colour, width=2):
-    d.line([(s(x), s(y1)), (s(x), s(y2))], fill=colour, width=s(width))
+def vl(x, y1, y2, c, w=2):
+    d.line([(s(x), s(y1)), (s(x), s(y2))], fill=c, width=s(w))
 
-def arrow_h(x1, x2, y, colour, width=2):
-    """Horizontal arrow from x1 to x2."""
-    hline(x1, x2, y, colour, width)
-    dx = 6 if x2 > x1 else -6
-    d.polygon(
-        [s((x2, y)), s((x2 - dx, y - 4)), s((x2 - dx, y + 4))],
-        fill=colour,
-    )
+def dot(x, y, c, r=5):
+    d.ellipse([s(x-r), s(y-r), s(x+r), s(y+r)], fill=c)
 
-def label_h(x, y, txt, sz=11, colour=TXT, right=False):
-    anchor = "ra" if right else "la"
-    d.text((s(x), s(y) - s(sz) // 2 - s(2)), txt, fill=colour,
-           font=font(s(sz)), anchor=anchor)
+def arrowhead_right(x, y, c):
+    d.polygon([s((x, y)), s((x-8, y-5)), s((x-8, y+5))], fill=c)
+
+def arrowhead_down(x, y, c):
+    d.polygon([s((x, y)), s((x-5, y-8)), s((x+5, y-8))], fill=c)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Layout constants
+# Geometry
 # ─────────────────────────────────────────────────────────────────────────────
-PICO_X1, PICO_Y1, PICO_X2, PICO_Y2 = 30, 30, 280, 850
+TITLE_H  = 42
+LEG_H    = 44   # legend strip at bottom
 
-BUS_X1, BUS_X2 = 340, 560
-
-DISP_X1, DISP_X2 = 640, 900
-D1_Y1, D1_Y2 = 60,  240
-D2_Y1, D2_Y2 = 330, 510
-D3_Y1, D3_Y2 = 600, 780
-
-MOT_X1, MOT_X2  = 980, 1200
-MOT_Y1, MOT_Y2  = 60,  420
-
-NOTE_X1, NOTE_X2 = 980, 1200
-NOTE_Y1, NOTE_Y2 = 460, 580
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Pico box
-# ─────────────────────────────────────────────────────────────────────────────
-rect(PICO_X1, PICO_Y1, PICO_X2, PICO_Y2, BOX_PICO, BOX_PICO_BD)
-text((PICO_X1 + PICO_X2) // 2, PICO_Y1 + 16, "Raspberry Pi Pico",
-     sz=14, bold=True, colour=BOX_PICO_BD, anchor="ma")
-text((PICO_X1 + PICO_X2) // 2, PICO_Y1 + 32, "(RP2040)",
-     sz=11, colour=BOX_PICO_BD, anchor="ma")
+P_X1, P_X2 = 30, 300
+P_Y1        = TITLE_H + 8
+ROW_H       = 72
+NHDR        = 10   # number of pin rows
+P_HDR_H     = 66   # space above first pin row (title + column header)
+P_USB_H     = 68   # USB sub-box at bottom
+P_Y2        = P_Y1 + P_HDR_H + NHDR * ROW_H + P_USB_H
 
-# Pin table
-pins = [
-    ("17", "GP13", "CS Display #1",  C_CS1),
-    ("19", "GP14", "CS Display #2",  C_CS2),
-    ("20", "GP15", "CS Display #3",  C_CS3),
-    ("21", "GP16", "Motor output",   C_MOTOR),
-    ("24", "GP18", "SPI SCK",        C_SCK),
-    ("25", "GP19", "SPI MOSI/SDA",   C_MOSI),
-    ("26", "GP20", "DC / A0",        C_DC),
-    ("27", "GP21", "RST / RES",      C_RST),
-    ("36", "3V3",  "Display supply", C_PWR),
-    ("38", "GND",  "Common ground",  C_GND),
-]
+PIN_Y0 = P_Y1 + P_HDR_H  # y of top of first pin row
 
-# column positions inside Pico box
-PX_PIN  = PICO_X1 + 14
-PX_GPIO = PICO_X1 + 50
-PX_SIG  = PICO_X1 + 95
+def pin_cy(i):
+    """Centre y of pin row i."""
+    return PIN_Y0 + i * ROW_H + ROW_H // 2
 
-# header
-y0 = PICO_Y1 + 60
-text(PX_PIN,  y0, "Pin",  sz=11, bold=True)
-text(PX_GPIO, y0, "GPIO", sz=11, bold=True)
-text(PX_SIG,  y0, "Signal", sz=11, bold=True)
+# Displays
+D_X1, D_X2 = 650, 920
+D_HDR       = 38
+D_NROWS     = 7          # CS SCK MOSI DC RST VCC GND
+D_ROW_H     = 30
+D_H         = D_HDR + D_NROWS * D_ROW_H   # = 248
+D_GAP       = 34
 
-ROW_H = 70
-for i, (pin, gpio, sig, col) in enumerate(pins):
-    y = y0 + 30 + i * ROW_H
-    text(PX_PIN,  y, pin,  sz=12, colour=TXT)
-    text(PX_GPIO, y, gpio, sz=12, colour=col, bold=True)
-    text(PX_SIG,  y, sig,  sz=11, colour=col)
-    # dots on right edge showing the signal exits
-    cx = PICO_X2
-    d.ellipse([s(cx - 5), s(y - 4), s(cx + 5), s(y + 6)], fill=col)
+# Anchor display 1 so row 0 (CS) aligns with pin_cy(0) (GP13)
+D1_Y1 = pin_cy(0) - D_HDR - D_ROW_H // 2
+D2_Y1 = D1_Y1 + D_H + D_GAP
+D3_Y1 = D2_Y1 + D_H + D_GAP
+DY1 = [D1_Y1, D2_Y1, D3_Y1]
+DY2 = [y + D_H for y in DY1]
 
-# USB label
-rect(PICO_X1 + 15, PICO_Y2 - 80, PICO_X2 - 15, PICO_Y2 - 15,
-     (235, 235, 250), BOX_PICO_BD, radius=5)
-text((PICO_X1 + PICO_X2) // 2, PICO_Y2 - 58,
-     "USB CDC-ACM", sz=11, bold=True, colour=BOX_PICO_BD, anchor="ma")
-text((PICO_X1 + PICO_X2) // 2, PICO_Y2 - 40,
-     "Modbus RTU  /dev/ttyACM0", sz=10, colour=BOX_PICO_BD, anchor="ma")
-text((PICO_X1 + PICO_X2) // 2, PICO_Y2 - 24,
-     "Debug       /dev/ttyACM1", sz=10, colour=BOX_PICO_BD, anchor="ma")
+def d_row_cy(n, r):
+    """Centre y of row r (0=CS) in display n."""
+    return DY1[n] + D_HDR + r * D_ROW_H + D_ROW_H // 2
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Signal bus column – vertical trunk lines
-# ─────────────────────────────────────────────────────────────────────────────
-BUS_TOP = PICO_Y1 + 50
-BUS_BOT = D3_Y2 + 20
+# Motor box (right side, top-aligned)
+M_X1, M_X2 = 1000, 1260
+M_Y1        = TITLE_H + 8
+M_Y2        = M_Y1 + 400
 
-# We draw 8 trunk lines side-by-side
-signals = [
-    ("SCK",  C_SCK),
-    ("MOSI", C_MOSI),
-    ("DC",   C_DC),
-    ("RST",  C_RST),
-    ("VCC",  C_PWR),
-    ("GND",  C_GND),
-    ("CS1",  C_CS1),
-    ("CS2",  C_CS2),
-]
-TRUNK_X_START = BUS_X1 + 10
-TRUNK_SEP     = 26
+# Notes box
+N_X1, N_X2 = 1000, 1260
+N_Y1        = M_Y2 + 20
+N_Y2        = N_Y1 + 180
 
-trunk_xs = {}
-for i, (name, col) in enumerate(signals):
-    tx = TRUNK_X_START + i * TRUNK_SEP
-    trunk_xs[name] = tx
-    vline(tx, BUS_TOP, BUS_BOT, col, width=2)
-    text(tx, BUS_TOP - 18, name, sz=9, colour=col, anchor="ma")
-
-# CS3 individual line (reaches only display 3)
-tx3 = TRUNK_X_START + len(signals) * TRUNK_SEP
-trunk_xs["CS3"] = tx3
-vline(tx3, D3_Y1 + 20, D3_Y2 - 20, C_CS3, width=2)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Horizontal connections from Pico to trunks
-# The dots are at PICO_X2; trunks are near BUS_X1
-# ─────────────────────────────────────────────────────────────────────────────
-def pico_y_for_pin(pin_name):
-    for i, (_, gpio, sig, _) in enumerate(pins):
-        if gpio == pin_name or sig.startswith(pin_name):
-            return PICO_Y1 + 60 + 30 + i * ROW_H + 1
-    return None
-
-gpio_to_trunk = {
-    "GP18": "SCK",
-    "GP19": "MOSI",
-    "GP20": "DC",
-    "GP21": "RST",
-    "3V3":  "VCC",
-    "GND":  "GND",
-    "GP13": "CS1",
-    "GP14": "CS2",
-    "GP15": "CS3",
-}
-
-for gpio, trunk in gpio_to_trunk.items():
-    py = pico_y_for_pin(gpio)
-    tx = trunk_xs[trunk]
-    if py:
-        col = next(c for (_, g, _, c) in pins if g == gpio)
-        hline(PICO_X2, tx, py, col, width=2)
-        d.ellipse([s(tx - 4), s(py - 4), s(tx + 4), s(py + 4)], fill=col)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Display boxes helper
-# ─────────────────────────────────────────────────────────────────────────────
-def draw_display(n, x1, y1, x2, y2, cs_gpio, cs_colour):
-    rect(x1, y1, x2, y2, BOX_DISP, BOX_DISP_BD)
-    cy = (y1 + y2) // 2
-    text((x1 + x2) // 2, y1 + 14, f"ST7735 Display #{n}",
-         sz=13, bold=True, colour=BOX_DISP_BD, anchor="ma")
-
-    # pin labels inside the box
-    rows = [
-        (f"CS  ←  {cs_gpio}", cs_colour),
-        ("SCK  ←  GP18",   C_SCK),
-        ("MOSI ←  GP19",   C_MOSI),
-        ("DC   ←  GP20",   C_DC),
-        ("RST  ←  GP21",   C_RST),
-        ("VCC  ←  3V3",    C_PWR),
-        ("GND  ←  GND",    C_GND),
-    ]
-    row_h = (y2 - y1 - 44) // len(rows)
-    for j, (lbl, col) in enumerate(rows):
-        text(x1 + 12, y1 + 38 + j * row_h, lbl, sz=11, colour=col)
-
-    return cy
-
-D1_CY = draw_display(1, DISP_X1, D1_Y1, DISP_X2, D1_Y2, "GP13", C_CS1)
-D2_CY = draw_display(2, DISP_X1, D2_Y1, DISP_X2, D2_Y2, "GP14", C_CS2)
-D3_CY = draw_display(3, DISP_X1, D3_Y1, DISP_X2, D3_Y2, "GP15", C_CS3)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Horizontal connections from trunks to display left edges
-# ─────────────────────────────────────────────────────────────────────────────
-shared_signals = ["SCK", "MOSI", "DC", "RST", "VCC", "GND"]
-cs_map = {1: "CS1", 2: "CS2", 3: "CS3"}
-disp_ys = {
-    1: (D1_Y1, D1_Y2),
-    2: (D2_Y1, D2_Y2),
-    3: (D3_Y1, D3_Y2),
-}
-cs_colours = {1: C_CS1, 2: C_CS2, 3: C_CS3}
-
-for n in range(1, 4):
-    y1, y2 = disp_ys[n]
-    row_h = (y2 - y1 - 44) // 7
-    # shared signals rows 1-6 (index 1..6 inside box)
-    for j, sig in enumerate(shared_signals):
-        row_y = y1 + 38 + (j + 1) * row_h    # +1 because CS is row 0
-        tx = trunk_xs[sig]
-        col = next(c for (name, c) in signals if name == sig)
-        hline(tx, DISP_X1, row_y, col, width=2)
-        d.ellipse([s(tx - 4), s(row_y - 4), s(tx + 4), s(row_y + 4)], fill=col)
-
-    # CS line – row 0
-    cs_row_y = y1 + 38
-    cs_sig = cs_map[n]
-    tx = trunk_xs[cs_sig]
-    col = cs_colours[n]
-    hline(tx, DISP_X1, cs_row_y, col, width=2)
-    d.ellipse([s(tx - 4), s(cs_row_y - 4), s(tx + 4), s(cs_row_y + 4)], fill=col)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Motor circuit box
-# ─────────────────────────────────────────────────────────────────────────────
-rect(MOT_X1, MOT_Y1, MOT_X2, MOT_Y2, BOX_MOTOR, BOX_MOTOR_BD)
-text((MOT_X1 + MOT_X2) // 2, MOT_Y1 + 16,
-     "Motor circuit", sz=14, bold=True, colour=BOX_MOTOR_BD, anchor="ma")
-
-motor_rows = [
-    ("IN  ← GP16 (3.3 V logic)", C_MOTOR),
-    ("NPN transistor / N-MOSFET", BOX_MOTOR_BD),
-    ("or relay module", BOX_MOTOR_BD),
-    ("", TXT),
-    ("External supply V+", C_PWR),
-    ("switched to motor load", BOX_MOTOR_BD),
-    ("", TXT),
-    ("Flyback diode 1N4007", (180, 0, 0)),
-    ("across inductive load", BOX_MOTOR_BD),
-    ("", TXT),
-    ("GND → Pico GND", C_GND),
-]
-for j, (lbl, col) in enumerate(motor_rows):
-    text(MOT_X1 + 12, MOT_Y1 + 42 + j * 33, lbl, sz=11, colour=col)
-
-# Motor signal horizontal line from Pico GP16
-motor_py = pico_y_for_pin("GP16")
-MOT_MID_Y = MOT_Y1 + 58
-if motor_py:
-    hline(PICO_X2, MOT_X1, motor_py, C_MOTOR, width=2)
-    # vertical jog to motor box top
-    vline(MOT_X1 + 5, motor_py, MOT_MID_Y, C_MOTOR, width=2)
-    hline(MOT_X1 + 5, MOT_X1 + 40, MOT_MID_Y, C_MOTOR, width=2)
-    d.polygon(
-        [s((MOT_X1 + 40, MOT_MID_Y)), s((MOT_X1 + 34, MOT_MID_Y - 4)),
-         s((MOT_X1 + 34, MOT_MID_Y + 4))],
-        fill=C_MOTOR,
-    )
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Note box
-# ─────────────────────────────────────────────────────────────────────────────
-rect(NOTE_X1, NOTE_Y1, NOTE_X2, NOTE_Y2, BOX_NOTE, BOX_NOTE_BD, radius=5)
-text((NOTE_X1 + NOTE_X2) // 2, NOTE_Y1 + 14,
-     "Notes", sz=12, bold=True, colour=BOX_NOTE_BD, anchor="ma")
-notes = [
-    "MISO not required.",
-    "MOSI shared on all 3 displays.",
-    "Each CS line is individual.",
-    "Use separate 3.3 V supply if",
-    "3 TFT backlights exceed Pico",
-    "3V3 current budget.",
-]
-for j, n in enumerate(notes):
-    text(NOTE_X1 + 10, NOTE_Y1 + 34 + j * 20, n, sz=10, colour=TXT)
+# Shared bus trunk x positions  (SCK MOSI DC RST VCC GND)
+SHARED = [("SCK",C_SCK),("MOSI",C_MOSI),("DC",C_DC),
+          ("RST",C_RST),("VCC",C_PWR),("GND",C_GND)]
+T_X0   = 340  # left edge of first trunk
+T_SEP  = 29
+TX     = {name: T_X0 + i * T_SEP for i, (name, _) in enumerate(SHARED)}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Title
 # ─────────────────────────────────────────────────────────────────────────────
-text(W // 2, 14, "JUMO Tower – Hardware Connection Diagram",
-     sz=18, bold=True, colour=(30, 30, 80), anchor="ma")
+txt(W//2, 10, "JUMO Tower – Hardware Connections",
+    sz=17, bold=True, c=(25,25,75), anc="mt")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Legend
+# Pico box
 # ─────────────────────────────────────────────────────────────────────────────
-legend_items = [
+rect(P_X1, P_Y1, P_X2, P_Y2, BOX_PICO, BOX_PICO_BD)
+txt((P_X1+P_X2)//2, P_Y1+10, "Raspberry Pi Pico",
+    sz=14, bold=True, c=BOX_PICO_BD, anc="mt")
+txt((P_X1+P_X2)//2, P_Y1+28, "(RP2040)",
+    sz=11, c=BOX_PICO_BD, anc="mt")
+
+# Column headers
+PX_NR  = P_X1 + 12
+PX_GPIO= P_X1 + 46
+PX_SIG = P_X1 + 97
+y_hdr  = P_Y1 + P_HDR_H - 14
+txt(PX_NR,  y_hdr, "Pin",    sz=10, bold=True)
+txt(PX_GPIO,y_hdr, "GPIO",   sz=10, bold=True)
+txt(PX_SIG, y_hdr, "Signal", sz=10, bold=True)
+
+pins = [
+    # (nr, gpio, label, colour)
+    ("17","GP13","CS Display #1", C_CS1),
+    ("19","GP14","CS Display #2", C_CS2),
+    ("20","GP15","CS Display #3", C_CS3),
+    ("24","GP18","SPI SCK",       C_SCK),
+    ("25","GP19","SPI MOSI/SDA",  C_MOSI),
+    ("26","GP20","DC / A0",       C_DC),
+    ("27","GP21","RST / RES",     C_RST),
+    ("36","3V3", "Display VCC",   C_PWR),
+    ("38","GND", "Common GND",    C_GND),
+    ("21","GP16","Motor output",  C_MOTOR),
+]
+
+for i,(nr,gpio,sig,c) in enumerate(pins):
+    cy = pin_cy(i)
+    txt(PX_NR,  cy-6, nr,   sz=11, c=TXT)
+    txt(PX_GPIO,cy-6, gpio, sz=12, bold=True, c=c)
+    txt(PX_SIG, cy-6, sig,  sz=11, c=c)
+    dot(P_X2, cy, c, r=4)
+
+# USB sub-box
+ub_y1 = P_Y2 - P_USB_H + 6
+rect(P_X1+12, ub_y1, P_X2-12, P_Y2-8, (232,232,250), BOX_PICO_BD, r=5)
+txt((P_X1+P_X2)//2, ub_y1+10, "USB CDC-ACM",
+    sz=11, bold=True, c=BOX_PICO_BD, anc="mt")
+txt((P_X1+P_X2)//2, ub_y1+26, "Modbus  /dev/ttyACM0",
+    sz=9, c=BOX_PICO_BD, anc="mt")
+txt((P_X1+P_X2)//2, ub_y1+42, "Debug   /dev/ttyACM1",
+    sz=9, c=BOX_PICO_BD, anc="mt")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared bus trunks (vertical lines + top labels)
+# ─────────────────────────────────────────────────────────────────────────────
+T_TOP = TITLE_H + 24
+T_BOT = DY2[2] + 10
+
+for name, c in SHARED:
+    tx = TX[name]
+    vl(tx, T_TOP, T_BOT, c, w=2)
+    txt(tx, T_TOP-2, name, sz=8, c=c, anc="mb")
+
+# Pico → trunk: horizontal from pin exit dot to trunk + junction dot
+shared_gpio = {"GP18":"SCK","GP19":"MOSI","GP20":"DC",
+               "GP21":"RST","3V3":"VCC","GND":"GND"}
+for i,(nr,gpio,sig,c) in enumerate(pins):
+    if gpio in shared_gpio:
+        cy = pin_cy(i)
+        tx = TX[shared_gpio[gpio]]
+        hl(P_X2, tx, cy, c, w=2)
+        dot(tx, cy, c, r=4)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CS individual L-routes (right → down → right)
+# Each CS routes in its own vertical lane, well clear of display left edge
+# ─────────────────────────────────────────────────────────────────────────────
+CS_LANES = {0: 510, 1: 536, 2: 562}   # x of vertical segment per CS
+CS_INFO  = [(0,0,C_CS1,"GP13"),(1,1,C_CS2,"GP14"),(2,2,C_CS3,"GP15")]
+
+for pin_i, disp_n, c, gpio in CS_INFO:
+    py  = pin_cy(pin_i)
+    ty  = d_row_cy(disp_n, 0)
+    lx  = CS_LANES[pin_i]
+    # Pico exit → lane
+    hl(P_X2, lx, py, c, w=2)
+    # vertical drop (or rise) in lane
+    vl(lx, py, ty, c, w=2)
+    # lane → display left edge
+    hl(lx, D_X1, ty, c, w=2)
+    arrowhead_right(D_X1, ty, c)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Motor routing: right → up → right → down into motor box
+# Route goes ABOVE all displays and bus (uses clear space at top)
+# ─────────────────────────────────────────────────────────────────────────────
+MOT_PIN_I = 9
+mot_py    = pin_cy(MOT_PIN_I)
+
+# vertical routing corridor x (between Pico and bus, no conflicts)
+MOT_UP_X  = P_X2 + 18   # just right of Pico right edge
+MOT_TOP_Y = TITLE_H + 6  # between title text and trunk labels
+
+mot_entry_x = (M_X1 + M_X2) // 2  # enter motor box from top-centre
+
+hl(P_X2,       MOT_UP_X,    mot_py,     C_MOTOR, w=2)   # short stub right
+vl(MOT_UP_X,   mot_py,      MOT_TOP_Y,  C_MOTOR, w=2)   # up
+hl(MOT_UP_X,   mot_entry_x, MOT_TOP_Y,  C_MOTOR, w=2)   # right across top
+vl(mot_entry_x, MOT_TOP_Y,  M_Y1,       C_MOTOR, w=2)   # down into box
+arrowhead_down(mot_entry_x, M_Y1, C_MOTOR)
+
+# small label on top horizontal segment
+txt(MOT_UP_X + 8, MOT_TOP_Y - 2, "GP16  Motor signal",
+    sz=10, c=C_MOTOR, anc="lb")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Display boxes + shared-bus horizontal branches
+# ─────────────────────────────────────────────────────────────────────────────
+DISP_SIGNALS = [
+    (None,   None),   # row 0 = CS (handled above)
     ("SCK",  C_SCK),
     ("MOSI", C_MOSI),
     ("DC",   C_DC),
     ("RST",  C_RST),
     ("VCC",  C_PWR),
     ("GND",  C_GND),
-    ("CS1",  C_CS1),
-    ("CS2",  C_CS2),
-    ("CS3",  C_CS3),
-    ("Motor GP16", C_MOTOR),
 ]
-LX = 30
-LY = H - 45
-text(LX, LY - 2, "Legend:", sz=11, bold=True)
-for i, (name, col) in enumerate(legend_items):
-    ox = LX + 70 + i * 140
-    d.rectangle([s(ox), s(LY + 2), s(ox + 30), s(LY + 12)], fill=col)
-    text(ox + 35, LY + 6, name, sz=10, colour=col)
+CS_GPIO_LBL = ["GP13","GP14","GP15"]
+CS_COLOURS  = [C_CS1, C_CS2, C_CS3]
+
+for n in range(3):
+    x1, x2 = D_X1, D_X2
+    y1, y2 = DY1[n], DY2[n]
+    rect(x1, y1, x2, y2, BOX_DISP, BOX_DISP_BD)
+    txt((x1+x2)//2, y1+10, f"ST7735  Display #{n+1}",
+        sz=13, bold=True, c=BOX_DISP_BD, anc="mt")
+
+    for r,(sig,c) in enumerate(DISP_SIGNALS):
+        ry = d_row_cy(n, r)
+        if r == 0:
+            lbl = f"CS   ←  {CS_GPIO_LBL[n]}"
+            c   = CS_COLOURS[n]
+        else:
+            gpio_map = {"SCK":"GP18","MOSI":"GP19","DC":"GP20",
+                        "RST":"GP21","VCC":"3V3","GND":"GND"}
+            lbl = f"{sig:<4} ←  {gpio_map[sig]}"
+            # horizontal branch from trunk to display
+            tx = TX[sig]
+            hl(tx, x1, ry, c, w=2)
+            dot(tx, ry, c, r=4)
+            arrowhead_right(x1, ry, c)
+
+        txt(x1+10, ry-7, lbl, sz=11, c=c)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Motor box
+# ─────────────────────────────────────────────────────────────────────────────
+rect(M_X1, M_Y1, M_X2, M_Y2, BOX_MOTOR, BOX_MOTOR_BD)
+txt((M_X1+M_X2)//2, M_Y1+10, "Motor Driver Circuit",
+    sz=14, bold=True, c=BOX_MOTOR_BD, anc="mt")
+
+motor_lines = [
+    ("IN  ← GP16  (3.3 V logic)",  C_MOTOR),
+    ("",                            TXT),
+    ("NPN / N-MOSFET or relay",     BOX_MOTOR_BD),
+    ("  module with driver",        BOX_MOTOR_BD),
+    ("",                            TXT),
+    ("V+  external supply",         C_PWR),
+    ("  switched to motor",         BOX_MOTOR_BD),
+    ("",                            TXT),
+    ("Flyback diode 1N4007",        (190,20,20)),
+    ("  across inductive load!",    (190,20,20)),
+    ("",                            TXT),
+    ("GND → common Pico GND",       C_GND),
+]
+for j,(lbl,c) in enumerate(motor_lines):
+    txt(M_X1+14, M_Y1+40+j*27, lbl, sz=11, c=c)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Notes box
+# ─────────────────────────────────────────────────────────────────────────────
+rect(N_X1, N_Y1, N_X2, N_Y2, BOX_NOTE, BOX_NOTE_BD, r=6)
+txt((N_X1+N_X2)//2, N_Y1+10, "Notes",
+    sz=12, bold=True, c=BOX_NOTE_BD, anc="mt")
+notes = [
+    "MISO not required.",
+    "SCK, MOSI, DC, RST, VCC, GND",
+    "  are shared on all 3 displays.",
+    "Each display has its own CS line.",
+    "Line crossing without dot = no connection.",
+    "Use separate 3.3V supply if 3 TFTs",
+    "  exceed Pico 3V3 current budget.",
+]
+for j,n in enumerate(notes):
+    txt(N_X1+10, N_Y1+32+j*20, n, sz=10, c=TXT)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Legend strip
+# ─────────────────────────────────────────────────────────────────────────────
+LY = H - LEG_H + 8
+txt(14, LY, "Legend:", sz=11, bold=True, c=TXT)
+items = [("SCK",C_SCK),("MOSI",C_MOSI),("DC",C_DC),("RST",C_RST),
+         ("VCC",C_PWR),("GND",C_GND),("CS1",C_CS1),("CS2",C_CS2),
+         ("CS3",C_CS3),("GP16 Motor",C_MOTOR)]
+for i,(lbl,c) in enumerate(items):
+    ox = 80 + i * 155
+    d.rectangle([s(ox), s(LY+4), s(ox+28), s(LY+15)], fill=c)
+    txt(ox+33, LY+6, lbl, sz=10, c=c)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Save
 # ─────────────────────────────────────────────────────────────────────────────
 out = img.resize((W, H), Image.LANCZOS)
-out.save("schematic.drawio.png", dpi=(150, 150))
-print("schematic.drawio.png written")
+out.save("schematic.png", dpi=(150, 150))
+print(f"schematic.png written  {W}x{H}")
