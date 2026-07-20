@@ -10,6 +10,8 @@ ModbusHandler::ModbusHandler() : _modbus(Serial)
     memset(holdingRegs, 0, sizeof(holdingRegs));
     holdingRegs[REG_TEMPERATURE_HIGH] = TEMP_REG_DISABLED;
     holdingRegs[REG_TEMPERATURE_LOW] = TEMP_REG_DISABLED;
+    holdingRegs[REG_HUMIDITY_HIGH] = TEMP_REG_DISABLED;
+    holdingRegs[REG_HUMIDITY_LOW] = TEMP_REG_DISABLED;
 }
 
 void ModbusHandler::begin()
@@ -48,8 +50,23 @@ bool ModbusHandler::hasTemperature() const
 
 float ModbusHandler::getTemperature() const
 {
-    const uint32_t rawValue = (static_cast<uint32_t>(holdingRegs[REG_TEMPERATURE_HIGH]) << 16U) |
-                              holdingRegs[REG_TEMPERATURE_LOW];
+    return getFloat(REG_TEMPERATURE_HIGH, REG_TEMPERATURE_LOW);
+}
+
+bool ModbusHandler::hasHumidity() const
+{
+    return isfinite(getHumidity());
+}
+
+float ModbusHandler::getHumidity() const
+{
+    return getFloat(REG_HUMIDITY_HIGH, REG_HUMIDITY_LOW);
+}
+
+float ModbusHandler::getFloat(uint8_t highReg, uint8_t lowReg) const
+{
+    const uint32_t rawValue = (static_cast<uint32_t>(holdingRegs[highReg]) << 16U) |
+                              holdingRegs[lowReg];
     float temperature;
     memcpy(&temperature, &rawValue, sizeof(temperature));
     return temperature;

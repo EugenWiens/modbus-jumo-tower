@@ -22,7 +22,7 @@ constexpr uint8_t MOTOR_PIN = 16;
 constexpr uint8_t MODBUS_UNIT_ID = 1;
 constexpr uint32_t MODBUS_BAUD = 115200;
 constexpr uint8_t MODBUS_NUM_COILS = 1;
-constexpr uint8_t MODBUS_NUM_REGS = 29;  // 24 display + 2 temperature + 3 version
+constexpr uint8_t MODBUS_NUM_REGS = 31;  // 24 display + 2 temperature + 2 humidity + 3 version
 
 // Coil indices
 constexpr uint8_t COIL_MOTOR = 0;
@@ -40,18 +40,21 @@ constexpr uint8_t DISPLAY_REG_BASES[MAX_DISPLAY_COUNT] = {
 	REG_DISP3_LINE1,
 };
 
-// Temperature display mode (FC03 read / FC16 write).
-// IEEE-754 float in two registers, high word first (e.g. 23.5 C = 0x41BC0000).
-// Write 0xFFFF to both registers to disable temperature mode and restore text display.
+// Climate display mode (FC03 read / FC16 write).
+// IEEE-754 floats in two registers each, high word first.
+// Write 0xFFFF to both registers of the temperature value to disable climate mode
+// and restore text display.
 constexpr uint8_t REG_TEMPERATURE_HIGH = 24;
 constexpr uint8_t REG_TEMPERATURE_LOW = 25;
+constexpr uint8_t REG_HUMIDITY_HIGH = 26;
+constexpr uint8_t REG_HUMIDITY_LOW = 27;
 constexpr uint16_t TEMP_REG_DISABLED = 0xFFFFU;
 
 // Version registers (FC03, read-only by convention).
 // Each holds one numeric component of the firmware version tag (e.g. "01.02.03" → 1, 2, 3).
-constexpr uint8_t REG_VERSION_MAJOR = 26;
-constexpr uint8_t REG_VERSION_MINOR = 27;
-constexpr uint8_t REG_VERSION_PATCH = 28;
+constexpr uint8_t REG_VERSION_MAJOR = 28;
+constexpr uint8_t REG_VERSION_MINOR = 29;
+constexpr uint8_t REG_VERSION_PATCH = 30;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
 #ifdef USE_TINYUSB
