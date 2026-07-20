@@ -18,6 +18,8 @@ static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
 static uint16_t s_prevTempHigh = TEMP_REG_DISABLED;
 static uint16_t s_prevTempLow = TEMP_REG_DISABLED;
+static uint16_t s_prevHumidityHigh = TEMP_REG_DISABLED;
+static uint16_t s_prevHumidityLow = TEMP_REG_DISABLED;
 static uint16_t s_ledToggleLoopCount = 0;
 static bool s_prevLedState = false;
 
@@ -92,20 +94,35 @@ void loop()
         }
     }
 
-    // ── Temperature registers (overrides all displays when set) ──────────────
+    // ── Climate registers (overrides all displays when temperature is set) ───
     const uint16_t curTempHigh = g_modbus.holdingRegs[REG_TEMPERATURE_HIGH];
     const uint16_t curTempLow = g_modbus.holdingRegs[REG_TEMPERATURE_LOW];
-    if (curTempHigh != s_prevTempHigh || curTempLow != s_prevTempLow)
+    const uint16_t curHumidityHigh = g_modbus.holdingRegs[REG_HUMIDITY_HIGH];
+    const uint16_t curHumidityLow = g_modbus.holdingRegs[REG_HUMIDITY_LOW];
+    if (curTempHigh != s_prevTempHigh || curTempLow != s_prevTempLow ||
+        curHumidityHigh != s_prevHumidityHigh || curHumidityLow != s_prevHumidityLow)
     {
         s_prevTempHigh = curTempHigh;
         s_prevTempLow = curTempLow;
+        s_prevHumidityHigh = curHumidityHigh;
+        s_prevHumidityLow = curHumidityLow;
         if (g_modbus.hasTemperature())
         {
-            DBG_SERIAL.printf("Temperature mode: %.1f C\r\n",
-                              static_cast<double>(g_modbus.getTemperature()));
+            const float temperature = g_modbus.getTemperature();
+            const bool hasHumidity = g_modbus.hasHumidity();
+            const float humidity = g_modbus.getHumidity();
+            DBG_SERIAL.printf("Temperature mode: %.1f C%s\r\n", static_cast<double>(temperature),
+                              hasHumidity ? " with humidity" : "");
             for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
             {
-                g_display.showTemperature(dispIdx, g_modbus.getTemperature());
+                if (hasHumidity)
+                {
+                    g_display.showClimate(dispIdx, temperature, humidity);
+                }
+                else
+                {
+                    g_display.showTemperature(dispIdx, temperature);
+                }
             }
         }
         else

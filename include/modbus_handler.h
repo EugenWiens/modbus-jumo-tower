@@ -24,11 +24,18 @@ class ModbusHandler
     // Temperature in °C. Call only when hasTemperature() is true.
     float getTemperature() const;
 
+    // Returns true when the humidity registers hold a finite IEEE-754 float.
+    bool hasHumidity() const;
+    // Relative humidity in %. Call only when hasHumidity() is true.
+    float getHumidity() const;
+
     // Decodes 4 holding registers into an 8-char string + null terminator.
     // dispIdx: 0, 1, or 2  |  lineIdx: 0 (line 1) or 1 (line 2)
     // buf must be at least 9 bytes.
     void getDisplayText(uint8_t dispIdx, uint8_t lineIdx, char* buf) const;
 
    private:
+    float getFloat(uint8_t highReg, uint8_t lowReg) const;
+
     ModbusRTUSlave _modbus;
 };

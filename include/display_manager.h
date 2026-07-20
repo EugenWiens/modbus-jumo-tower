@@ -18,4 +18,7 @@ class DisplayManager
     // Shows temperature in °C centred on the display in large font.
     // Replaces normal text mode; call update() to return to text mode.
     void showTemperature(uint8_t idx, float tempC);
+
+    // Shows temperature above relative humidity. Temperature uses the larger font.
+    void showClimate(uint8_t idx, float tempC, float humidityPercent);
 };

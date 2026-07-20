@@ -77,16 +77,52 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `12`–`15` | `REG_DISP2_LINE2` | R/W | Display 2, line 2 — 8 ASCII chars packed 2 per register¹ |
 | `16`–`19` | `REG_DISP3_LINE1` | R/W | Display 3, line 1 — 8 ASCII chars packed 2 per register¹ |
 | `20`–`23` | `REG_DISP3_LINE2` | R/W | Display 3, line 2 — 8 ASCII chars packed 2 per register¹ |
-| `24`–`25` | `REG_TEMPERATURE_HIGH` / `REG_TEMPERATURE_LOW` | R/W | IEEE-754 `float` temperature in °C, high word first. Write `0xFFFF` to both registers to disable and restore text on all displays. |
-| `26` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
-| `27` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
-| `28` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
+| `24`–`25` | `REG_TEMPERATURE_HIGH` / `REG_TEMPERATURE_LOW` | R/W | IEEE-754 `float` temperature in °C, high word first. |
+| `26`–`27` | `REG_HUMIDITY_HIGH` / `REG_HUMIDITY_LOW` | R/W | IEEE-754 `float` relative humidity in %, high word first. |
+| `28` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
+| `29` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
+| `30` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
-### Temperature mode
+### Climate mode
 
-Writing a finite IEEE-754 `float` to registers `24`–`25` switches **all three displays** into temperature mode: the numeric value is rendered as `XX.XC` and all display text registers (`0`–`23`) are ignored until temperature mode is disabled again by writing `0xFFFF` to both registers. Use FC16 to write both registers together.
+Writing a finite IEEE-754 `float` to registers `24`–`25` switches **all three displays** into climate mode. The temperature is shown near the top in text size `5`; relative humidity from registers `26`–`27` is shown below it in text size `3`. Both values are formatted with one decimal place, for example `21.0C` and `48.5%`.
+
+The four registers form two adjacent 32-bit IEEE-754 floats in high-word-first order:
+
+| Registers | Value | Example IEEE-754 bytes |
+|-----------|-------|------------------------|
+| `24`–`25` | Temperature in °C | `21.0` = `0x41A80000` |
+| `26`–`27` | Relative humidity in % | `48.5` = `0x42420000` |
+
+Use FC16 to write both floats together. With `mbpoll`, the following command sends `21.0C` and `48.5%` in one request:
+
+```bash
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 24 -t 4:float -B -1 \
+	/dev/ttyACM0 21.0 48.5
+```
+
+`-0` makes `mbpoll` use the firmware's zero-based register addresses, `-t 4:float` encodes each value as a 32-bit holding-register float, and `-B` selects high-word-first order. The first argument after the device is always the temperature; the second is the relative humidity.
+
+For a negative temperature, place `--` before the values so `mbpoll` does not interpret the minus sign as an option:
+
+```bash
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 24 -t 4:float -B -1 \
+	/dev/ttyACM0 -- -5.0 48.5
+```
+
+To inspect the four raw words after writing, use:
+
+```bash
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 24 -c 4 -t 4:hex -1 \
+	/dev/ttyACM0
+```
+
+Display text registers (`0`–`23`) are ignored while climate mode is active. To restore normal text mode, write `0xFFFF` to both temperature registers (`24` and `25`).
 
 ## Debug output
 
