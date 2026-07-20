@@ -27,11 +27,11 @@ void DisplayManager::init()
 
     pinMode(DISP_RST_PIN, OUTPUT);
     digitalWrite(DISP_RST_PIN, HIGH);
-    delay(100);
+    delay(50);
     digitalWrite(DISP_RST_PIN, LOW);
-    delay(100);
+    delay(50);
     digitalWrite(DISP_RST_PIN, HIGH);
-    delay(200);
+    delay(50);
 
     for (uint8_t i = 0; i < DISPLAY_COUNT; i++)
     {
@@ -102,7 +102,7 @@ void DisplayManager::showTemperature(uint8_t idx, float tempC)
     }
 
     char buf[12];
-    snprintf(buf, sizeof(buf), "%.1fC", static_cast<double>(tempC));
+    snprintf(buf, sizeof(buf), tempC < 0.0F ? "%.0fC" : "%.1fC", static_cast<double>(tempC));
 
     s_disp[idx].fillScreen(ST77XX_BLACK);
     s_disp[idx].setTextColor(ST77XX_WHITE);
@@ -125,35 +125,45 @@ void DisplayManager::showClimate(uint8_t idx, float tempC, float humidityPercent
 
     char temperatureBuf[12];
     char humidityBuf[12];
-    snprintf(temperatureBuf, sizeof(temperatureBuf), "%.1fC", static_cast<double>(tempC));
+    snprintf(temperatureBuf, sizeof(temperatureBuf), tempC < 0.0F ? "%.0fC" : "%.1fC",
+             static_cast<double>(tempC));
     snprintf(humidityBuf, sizeof(humidityBuf), "%.1f%%", static_cast<double>(humidityPercent));
 
     s_disp[idx].fillScreen(ST77XX_BLACK);
     s_disp[idx].setTextColor(ST77XX_WHITE);
 
-    uint8_t temperatureTextSize = 5;
-    s_disp[idx].setTextSize(temperatureTextSize);
+    uint8_t temperatureTextWidth = 5;
+    constexpr uint8_t temperatureTextHeight = 7;
+    s_disp[idx].setTextSize(temperatureTextWidth, temperatureTextHeight);
     int16_t temperatureBx, temperatureBy;
     uint16_t temperatureBw, temperatureBh;
     s_disp[idx].getTextBounds(temperatureBuf, 0, 0, &temperatureBx, &temperatureBy,
                               &temperatureBw, &temperatureBh);
     if (temperatureBw > s_disp[idx].width())
     {
-        temperatureTextSize = 4;
-        s_disp[idx].setTextSize(temperatureTextSize);
+        temperatureTextWidth = 4;
+        s_disp[idx].setTextSize(temperatureTextWidth, temperatureTextHeight);
         s_disp[idx].getTextBounds(temperatureBuf, 0, 0, &temperatureBx, &temperatureBy,
                                   &temperatureBw, &temperatureBh);
     }
 
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - temperatureBw) / 2 - temperatureBx),
-                          static_cast<int16_t>(12 - temperatureBy));
-    s_disp[idx].print(temperatureBuf);
-
-    s_disp[idx].setTextSize(3);
+    constexpr uint8_t humidityTextWidth = 3;
+    constexpr uint8_t humidityTextHeight = 5;
+    s_disp[idx].setTextSize(humidityTextWidth, humidityTextHeight);
     int16_t humidityBx, humidityBy;
     uint16_t humidityBw, humidityBh;
     s_disp[idx].getTextBounds(humidityBuf, 0, 0, &humidityBx, &humidityBy, &humidityBw, &humidityBh);
+
+    constexpr int16_t temperatureTop = 8;
+    constexpr int16_t humidityBottomMargin = 10;
+    const int16_t humidityTop = static_cast<int16_t>(s_disp[idx].height() - humidityBh - humidityBottomMargin);
+    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - temperatureBw) / 2 - temperatureBx),
+                          static_cast<int16_t>(temperatureTop - temperatureBy));
+    s_disp[idx].setTextSize(temperatureTextWidth, temperatureTextHeight);
+    s_disp[idx].print(temperatureBuf);
+
     s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - humidityBw) / 2 - humidityBx),
-                          static_cast<int16_t>(78 - humidityBy));
+                          static_cast<int16_t>(humidityTop - humidityBy));
+    s_disp[idx].setTextSize(humidityTextWidth, humidityTextHeight);
     s_disp[idx].print(humidityBuf);
 }

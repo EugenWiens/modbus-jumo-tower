@@ -87,7 +87,7 @@ The firmware version is injected automatically from the latest Git tag via `get_
 
 ### Climate mode
 
-Writing a finite IEEE-754 `float` to registers `24`–`25` switches **all three displays** into climate mode. The temperature is shown near the top in text size `5`; relative humidity from registers `26`–`27` is shown below it in text size `3`. Both values are formatted with one decimal place, for example `21.0C` and `48.5%`.
+Writing a finite IEEE-754 `float` to registers `24`–`25` switches **all three displays** into climate mode. The temperature uses text scaling `5 × 7` (width × height) near the top; relative humidity from registers `26`–`27` is shown near the bottom with scaling `3 × 5`. The larger vertical scale makes both lines use most of the display height without widening the text. Positive temperatures and relative humidity are formatted with one decimal place, for example `21.0C` and `48.5%`; negative temperatures are rounded to whole degrees, for example `-5C`.
 
 The four registers form two adjacent 32-bit IEEE-754 floats in high-word-first order:
 

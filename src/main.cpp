@@ -35,7 +35,9 @@ static void refreshDisplay(uint8_t dispIdx)
 void setup()
 {
     DBG_SERIAL.begin(115200);  // register 2nd CDC interface before stack starts
+#ifdef DEBUG
     delay(2000);
+#endif
     DBG_SERIAL.println("Starting JUMO Tower");
 
     g_display.init();
