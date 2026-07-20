@@ -16,7 +16,8 @@ static MotorControl g_motor;
 
 static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
-static uint16_t s_prevTemp = TEMP_REG_DISABLED;
+static uint16_t s_prevTempHigh = TEMP_REG_DISABLED;
+static uint16_t s_prevTempLow = TEMP_REG_DISABLED;
 static uint16_t s_ledToggleLoopCount = 0;
 static bool s_prevLedState = false;
 
@@ -36,7 +37,11 @@ void setup()
     DBG_SERIAL.println("Starting JUMO Tower");
 
     g_display.init();
-    g_display.showLargeText(0, 3, "Hallo", "Harald");
+    g_display.showLargeText(0, 4, "Hallo", "Harald");
+    char firmwareVersion[16];
+    snprintf(firmwareVersion, sizeof(firmwareVersion), "%d.%d.%d", FIRMWARE_VERSION_MAJOR,
+             FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH);
+    g_display.showLargeText(1, 2, "SW Version", firmwareVersion);
     DBG_SERIAL.printf("Displays initialized: %u ST7735 TFTs\r\n", DISPLAY_COUNT);
     g_motor.init(MOTOR_PIN);
     DBG_SERIAL.printf("Motor initialized: GPIO %u\r\n", MOTOR_PIN);
@@ -87,11 +92,13 @@ void loop()
         }
     }
 
-    // ── Temperature register (overrides all displays when set) ────────────────
-    const uint16_t curTemp = g_modbus.holdingRegs[REG_TEMPERATURE];
-    if (curTemp != s_prevTemp)
+    // ── Temperature registers (overrides all displays when set) ──────────────
+    const uint16_t curTempHigh = g_modbus.holdingRegs[REG_TEMPERATURE_HIGH];
+    const uint16_t curTempLow = g_modbus.holdingRegs[REG_TEMPERATURE_LOW];
+    if (curTempHigh != s_prevTempHigh || curTempLow != s_prevTempLow)
     {
-        s_prevTemp = curTemp;
+        s_prevTempHigh = curTempHigh;
+        s_prevTempLow = curTempLow;
         if (g_modbus.hasTemperature())
         {
             DBG_SERIAL.printf("Temperature mode: %.1f C\r\n",

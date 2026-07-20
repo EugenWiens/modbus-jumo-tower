@@ -77,16 +77,16 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `12`–`15` | `REG_DISP2_LINE2` | R/W | Display 2, line 2 — 8 ASCII chars packed 2 per register¹ |
 | `16`–`19` | `REG_DISP3_LINE1` | R/W | Display 3, line 1 — 8 ASCII chars packed 2 per register¹ |
 | `20`–`23` | `REG_DISP3_LINE2` | R/W | Display 3, line 2 — 8 ASCII chars packed 2 per register¹ |
-| `24` | `REG_TEMPERATURE` | R/W | Temperature x 10 in C (e.g. `235` -> 23.5 C). Write `0xFFFF` to disable and restore text on all displays. |
-| `25` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
-| `26` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
-| `27` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
+| `24`–`25` | `REG_TEMPERATURE_HIGH` / `REG_TEMPERATURE_LOW` | R/W | IEEE-754 `float` temperature in °C, high word first. Write `0xFFFF` to both registers to disable and restore text on all displays. |
+| `26` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
+| `27` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
+| `28` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
 ### Temperature mode
 
-Writing a value other than `0xFFFF` to register `24` switches **all three displays** into temperature mode: the numeric value is rendered as `XX.XC` and all display text registers (`0`–`23`) are ignored until temperature mode is disabled again by writing `0xFFFF`.
+Writing a finite IEEE-754 `float` to registers `24`–`25` switches **all three displays** into temperature mode: the numeric value is rendered as `XX.XC` and all display text registers (`0`–`23`) are ignored until temperature mode is disabled again by writing `0xFFFF` to both registers. Use FC16 to write both registers together.
 
 ## Debug output
 

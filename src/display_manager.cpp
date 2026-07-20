@@ -7,10 +7,10 @@
 
 #include "config.h"
 
-static Adafruit_ST7735 s_disp[DISPLAY_COUNT] = {
-    Adafruit_ST7735(DISP_CS_PINS[0], DISP_DC_PIN, DISP_RST_PIN),
-    Adafruit_ST7735(DISP_CS_PINS[1], DISP_DC_PIN, DISP_RST_PIN),
-    Adafruit_ST7735(DISP_CS_PINS[2], DISP_DC_PIN, DISP_RST_PIN),
+static Adafruit_ST7735 s_disp[MAX_DISPLAY_COUNT] = {
+    Adafruit_ST7735(DISP_CS_PINS[0], DISP_DC_PIN, -1),
+    Adafruit_ST7735(DISP_CS_PINS[1], DISP_DC_PIN, -1),
+    Adafruit_ST7735(DISP_CS_PINS[2], DISP_DC_PIN, -1),
 };
 
 void DisplayManager::init()
@@ -25,10 +25,18 @@ void DisplayManager::init()
     SPI.setTX(SPI_MOSI_PIN);
     SPI.begin();
 
+    pinMode(DISP_RST_PIN, OUTPUT);
+    digitalWrite(DISP_RST_PIN, HIGH);
+    delay(100);
+    digitalWrite(DISP_RST_PIN, LOW);
+    delay(100);
+    digitalWrite(DISP_RST_PIN, HIGH);
+    delay(200);
+
     for (uint8_t i = 0; i < DISPLAY_COUNT; i++)
     {
         s_disp[i].initR(ST7735_INIT_OPTION);
-        s_disp[i].setRotation(0);
+        s_disp[i].setRotation(DISP_ROTATION);
         s_disp[i].fillScreen(ST77XX_BLACK);
     }
 }
@@ -43,9 +51,19 @@ void DisplayManager::update(uint8_t idx, const char* line1, const char* line2)
     s_disp[idx].fillScreen(ST77XX_BLACK);
     s_disp[idx].setTextSize(2);
     s_disp[idx].setTextColor(ST77XX_WHITE);
-    s_disp[idx].setCursor(8, 48);
+
+    int16_t bx1, by1, bx2, by2;
+    uint16_t bw1, bh1, bw2, bh2;
+    s_disp[idx].getTextBounds(line1, 0, 0, &bx1, &by1, &bw1, &bh1);
+    s_disp[idx].getTextBounds(line2, 0, 0, &bx2, &by2, &bw2, &bh2);
+
+    constexpr int16_t lineGap = 8;
+    const int16_t textTop = static_cast<int16_t>((s_disp[idx].height() - bh1 - lineGap - bh2) / 2);
+    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1),
+                          static_cast<int16_t>(textTop - by1));
     s_disp[idx].print(line1);
-    s_disp[idx].setCursor(8, 96);
+    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2),
+                          static_cast<int16_t>(textTop + bh1 + lineGap - by2));
     s_disp[idx].print(line2);
 }
 
@@ -60,14 +78,19 @@ void DisplayManager::showLargeText(uint8_t idx, uint8_t textSize, const char* li
     s_disp[idx].setTextColor(ST77XX_WHITE);
     s_disp[idx].setTextSize(textSize);
 
-    int16_t bx, by;
-    uint16_t bw, bh;
-    s_disp[idx].getTextBounds(line1, 0, 0, &bx, &by, &bw, &bh);
-    s_disp[idx].setCursor(static_cast<int16_t>((DISP_WIDTH - bw) / 2), 48);
+    int16_t bx1, by1, bx2, by2;
+    uint16_t bw1, bh1, bw2, bh2;
+    s_disp[idx].getTextBounds(line1, 0, 0, &bx1, &by1, &bw1, &bh1);
+    s_disp[idx].getTextBounds(line2, 0, 0, &bx2, &by2, &bw2, &bh2);
+
+    constexpr int16_t lineGap = 8;
+    const int16_t textTop = static_cast<int16_t>((s_disp[idx].height() - bh1 - lineGap - bh2) / 2);
+    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1),
+                          static_cast<int16_t>(textTop - by1));
     s_disp[idx].print(line1);
 
-    s_disp[idx].getTextBounds(line2, 0, 0, &bx, &by, &bw, &bh);
-    s_disp[idx].setCursor(static_cast<int16_t>((DISP_WIDTH - bw) / 2), 96);
+    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2),
+                          static_cast<int16_t>(textTop + bh1 + lineGap - by2));
     s_disp[idx].print(line2);
 }
 
@@ -83,7 +106,7 @@ void DisplayManager::showTemperature(uint8_t idx, float tempC)
 
     s_disp[idx].fillScreen(ST77XX_BLACK);
     s_disp[idx].setTextColor(ST77XX_WHITE);
-    s_disp[idx].setTextSize(4);
+    s_disp[idx].setTextSize(5);
 
     int16_t bx, by;
     uint16_t bw, bh;

@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "modbus_handler.h"
 
+#include <math.h>
 #include <string.h>
 
 ModbusHandler::ModbusHandler() : _modbus(Serial)
 {
     memset(coils, 0, sizeof(coils));
     memset(holdingRegs, 0, sizeof(holdingRegs));
-    holdingRegs[REG_TEMPERATURE] = TEMP_REG_DISABLED;  // disabled until master writes a value
+    holdingRegs[REG_TEMPERATURE_HIGH] = TEMP_REG_DISABLED;
+    holdingRegs[REG_TEMPERATURE_LOW] = TEMP_REG_DISABLED;
 }
 
 void ModbusHandler::begin()
@@ -41,12 +43,16 @@ bool ModbusHandler::getMotorState() const
 
 bool ModbusHandler::hasTemperature() const
 {
-    return holdingRegs[REG_TEMPERATURE] != TEMP_REG_DISABLED;
+    return isfinite(getTemperature());
 }
 
 float ModbusHandler::getTemperature() const
 {
-    return static_cast<float>(holdingRegs[REG_TEMPERATURE]) / 10.0f;
+    const uint32_t rawValue = (static_cast<uint32_t>(holdingRegs[REG_TEMPERATURE_HIGH]) << 16U) |
+                              holdingRegs[REG_TEMPERATURE_LOW];
+    float temperature;
+    memcpy(&temperature, &rawValue, sizeof(temperature));
+    return temperature;
 }
 
 void ModbusHandler::getDisplayText(uint8_t dispIdx, uint8_t lineIdx, char* buf) const
