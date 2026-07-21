@@ -65,6 +65,23 @@ void loop()
 {
     g_modbus.poll();
 
+    // ── Easter Egg command register ──────────────────────────────────────────
+    const uint16_t requestedEasterEgg = g_modbus.holdingRegs[REG_EASTER_EGG];
+    if (requestedEasterEgg != EASTER_EGG_NONE)
+    {
+        // Commands are self-resetting so writing the same Egg ID can trigger it again.
+        g_modbus.holdingRegs[REG_EASTER_EGG] = EASTER_EGG_NONE;
+        if (g_display.startEasterEgg(requestedEasterEgg, millis()))
+        {
+            DBG_SERIAL.printf("Easter Egg %u: started\r\n", requestedEasterEgg);
+        }
+        else
+        {
+            DBG_SERIAL.printf("Easter Egg %u: unknown\r\n", requestedEasterEgg);
+        }
+    }
+    g_display.updateEasterEgg(millis());
+
     if (++s_ledToggleLoopCount == 10000U)
     {
         s_ledToggleLoopCount = 0;

@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "config.h"
+#include "easter_egg_factory.h"
 
 static Adafruit_ST7735 s_disp[MAX_DISPLAY_COUNT] = {
     Adafruit_ST7735(DISP_CS_PINS[0], DISP_DC_PIN, -1),
@@ -48,23 +49,27 @@ void DisplayManager::update(uint8_t idx, const char* line1, const char* line2)
         return;
     }
 
-    s_disp[idx].fillScreen(ST77XX_BLACK);
-    s_disp[idx].setTextSize(2);
-    s_disp[idx].setTextColor(ST77XX_WHITE);
+    EasterEggDisplaySnapshot snapshot = {};
+    snprintf(snapshot.lines[0].text, sizeof(snapshot.lines[0].text), "%s", line1);
+    snprintf(snapshot.lines[1].text, sizeof(snapshot.lines[1].text), "%s", line2);
+    snapshot.lines[0].textSizeX = 2;
+    snapshot.lines[0].textSizeY = 2;
+    snapshot.lines[1].textSizeX = 2;
+    snapshot.lines[1].textSizeY = 2;
 
     int16_t bx1, by1, bx2, by2;
     uint16_t bw1, bh1, bw2, bh2;
+    s_disp[idx].setTextSize(snapshot.lines[0].textSizeX, snapshot.lines[0].textSizeY);
     s_disp[idx].getTextBounds(line1, 0, 0, &bx1, &by1, &bw1, &bh1);
     s_disp[idx].getTextBounds(line2, 0, 0, &bx2, &by2, &bw2, &bh2);
 
     constexpr int16_t lineGap = 8;
     const int16_t textTop = static_cast<int16_t>((s_disp[idx].height() - bh1 - lineGap - bh2) / 2);
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1),
-                          static_cast<int16_t>(textTop - by1));
-    s_disp[idx].print(line1);
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2),
-                          static_cast<int16_t>(textTop + bh1 + lineGap - by2));
-    s_disp[idx].print(line2);
+    snapshot.lines[0].x = static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1);
+    snapshot.lines[0].y = static_cast<int16_t>(textTop - by1);
+    snapshot.lines[1].x = static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2);
+    snapshot.lines[1].y = static_cast<int16_t>(textTop + bh1 + lineGap - by2);
+    setBaseSnapshot(idx, snapshot);
 }
 
 void DisplayManager::showLargeText(uint8_t idx, uint8_t textSize, const char* line1, const char* line2)
@@ -74,24 +79,27 @@ void DisplayManager::showLargeText(uint8_t idx, uint8_t textSize, const char* li
         return;
     }
 
-    s_disp[idx].fillScreen(ST77XX_BLACK);
-    s_disp[idx].setTextColor(ST77XX_WHITE);
-    s_disp[idx].setTextSize(textSize);
+    EasterEggDisplaySnapshot snapshot = {};
+    snprintf(snapshot.lines[0].text, sizeof(snapshot.lines[0].text), "%s", line1);
+    snprintf(snapshot.lines[1].text, sizeof(snapshot.lines[1].text), "%s", line2);
+    snapshot.lines[0].textSizeX = textSize;
+    snapshot.lines[0].textSizeY = textSize;
+    snapshot.lines[1].textSizeX = textSize;
+    snapshot.lines[1].textSizeY = textSize;
 
     int16_t bx1, by1, bx2, by2;
     uint16_t bw1, bh1, bw2, bh2;
+    s_disp[idx].setTextSize(textSize);
     s_disp[idx].getTextBounds(line1, 0, 0, &bx1, &by1, &bw1, &bh1);
     s_disp[idx].getTextBounds(line2, 0, 0, &bx2, &by2, &bw2, &bh2);
 
     constexpr int16_t lineGap = 8;
     const int16_t textTop = static_cast<int16_t>((s_disp[idx].height() - bh1 - lineGap - bh2) / 2);
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1),
-                          static_cast<int16_t>(textTop - by1));
-    s_disp[idx].print(line1);
-
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2),
-                          static_cast<int16_t>(textTop + bh1 + lineGap - by2));
-    s_disp[idx].print(line2);
+    snapshot.lines[0].x = static_cast<int16_t>((s_disp[idx].width() - bw1) / 2 - bx1);
+    snapshot.lines[0].y = static_cast<int16_t>(textTop - by1);
+    snapshot.lines[1].x = static_cast<int16_t>((s_disp[idx].width() - bw2) / 2 - bx2);
+    snapshot.lines[1].y = static_cast<int16_t>(textTop + bh1 + lineGap - by2);
+    setBaseSnapshot(idx, snapshot);
 }
 
 void DisplayManager::showTemperature(uint8_t idx, float tempC)
@@ -104,16 +112,18 @@ void DisplayManager::showTemperature(uint8_t idx, float tempC)
     char buf[12];
     snprintf(buf, sizeof(buf), tempC < 0.0F ? "%.0fC" : "%.1fC", static_cast<double>(tempC));
 
-    s_disp[idx].fillScreen(ST77XX_BLACK);
-    s_disp[idx].setTextColor(ST77XX_WHITE);
-    s_disp[idx].setTextSize(5);
+    EasterEggDisplaySnapshot snapshot = {};
+    snprintf(snapshot.lines[0].text, sizeof(snapshot.lines[0].text), "%s", buf);
+    snapshot.lines[0].textSizeX = 5;
+    snapshot.lines[0].textSizeY = 5;
 
     int16_t bx, by;
     uint16_t bw, bh;
+    s_disp[idx].setTextSize(snapshot.lines[0].textSizeX, snapshot.lines[0].textSizeY);
     s_disp[idx].getTextBounds(buf, 0, 0, &bx, &by, &bw, &bh);
-    s_disp[idx].setCursor(static_cast<int16_t>((DISP_WIDTH - bw) / 2),
-                          static_cast<int16_t>((DISP_HEIGHT - bh) / 2 - by));
-    s_disp[idx].print(buf);
+    snapshot.lines[0].x = static_cast<int16_t>((DISP_WIDTH - bw) / 2);
+    snapshot.lines[0].y = static_cast<int16_t>((DISP_HEIGHT - bh) / 2 - by);
+    setBaseSnapshot(idx, snapshot);
 }
 
 void DisplayManager::showClimate(uint8_t idx, float tempC, float humidityPercent)
@@ -129,8 +139,9 @@ void DisplayManager::showClimate(uint8_t idx, float tempC, float humidityPercent
              static_cast<double>(tempC));
     snprintf(humidityBuf, sizeof(humidityBuf), "%.1f%%", static_cast<double>(humidityPercent));
 
-    s_disp[idx].fillScreen(ST77XX_BLACK);
-    s_disp[idx].setTextColor(ST77XX_WHITE);
+    EasterEggDisplaySnapshot snapshot = {};
+    snprintf(snapshot.lines[0].text, sizeof(snapshot.lines[0].text), "%s", temperatureBuf);
+    snprintf(snapshot.lines[1].text, sizeof(snapshot.lines[1].text), "%s", humidityBuf);
 
     uint8_t temperatureTextWidth = 5;
     constexpr uint8_t temperatureTextHeight = 7;
@@ -157,13 +168,84 @@ void DisplayManager::showClimate(uint8_t idx, float tempC, float humidityPercent
     constexpr int16_t temperatureTop = 8;
     constexpr int16_t humidityBottomMargin = 10;
     const int16_t humidityTop = static_cast<int16_t>(s_disp[idx].height() - humidityBh - humidityBottomMargin);
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - temperatureBw) / 2 - temperatureBx),
-                          static_cast<int16_t>(temperatureTop - temperatureBy));
-    s_disp[idx].setTextSize(temperatureTextWidth, temperatureTextHeight);
-    s_disp[idx].print(temperatureBuf);
+    snapshot.lines[0].textSizeX = temperatureTextWidth;
+    snapshot.lines[0].textSizeY = temperatureTextHeight;
+    snapshot.lines[0].x = static_cast<int16_t>((s_disp[idx].width() - temperatureBw) / 2 - temperatureBx);
+    snapshot.lines[0].y = static_cast<int16_t>(temperatureTop - temperatureBy);
+    snapshot.lines[1].textSizeX = humidityTextWidth;
+    snapshot.lines[1].textSizeY = humidityTextHeight;
+    snapshot.lines[1].x = static_cast<int16_t>((s_disp[idx].width() - humidityBw) / 2 - humidityBx);
+    snapshot.lines[1].y = static_cast<int16_t>(humidityTop - humidityBy);
+    setBaseSnapshot(idx, snapshot);
+}
 
-    s_disp[idx].setCursor(static_cast<int16_t>((s_disp[idx].width() - humidityBw) / 2 - humidityBx),
-                          static_cast<int16_t>(humidityTop - humidityBy));
-    s_disp[idx].setTextSize(humidityTextWidth, humidityTextHeight);
-    s_disp[idx].print(humidityBuf);
+bool DisplayManager::startEasterEgg(uint16_t eggId, uint32_t nowMs)
+{
+    EasterEgg* easterEgg = EasterEggFactory::create(eggId);
+    if (easterEgg == nullptr)
+    {
+        return false;
+    }
+
+    _activeEasterEgg = easterEgg;
+    _activeEasterEgg->start(nowMs, _baseSnapshots, DISPLAY_COUNT);
+    _lastEasterEggFrameMs = nowMs;
+    for (uint8_t displayIdx = 0; displayIdx < DISPLAY_COUNT; displayIdx++)
+    {
+        _activeEasterEgg->renderFrame(displayIdx, s_disp[displayIdx], nowMs);
+    }
+    return true;
+}
+
+void DisplayManager::updateEasterEgg(uint32_t nowMs)
+{
+    if (_activeEasterEgg == nullptr)
+    {
+        return;
+    }
+
+    if (_activeEasterEgg->isFinished(nowMs))
+    {
+        _activeEasterEgg = nullptr;
+        for (uint8_t displayIdx = 0; displayIdx < DISPLAY_COUNT; displayIdx++)
+        {
+            renderSnapshot(displayIdx, _baseSnapshots[displayIdx]);
+        }
+        return;
+    }
+
+    constexpr uint32_t frameIntervalMs = 50;
+    if (nowMs - _lastEasterEggFrameMs < frameIntervalMs)
+    {
+        return;
+    }
+
+    _lastEasterEggFrameMs = nowMs;
+    for (uint8_t displayIdx = 0; displayIdx < DISPLAY_COUNT; displayIdx++)
+    {
+        _activeEasterEgg->renderFrame(displayIdx, s_disp[displayIdx], nowMs);
+    }
+}
+
+void DisplayManager::setBaseSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot)
+{
+    _baseSnapshots[idx] = snapshot;
+    if (_activeEasterEgg == nullptr)
+    {
+        renderSnapshot(idx, snapshot);
+    }
+}
+
+void DisplayManager::renderSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot) const
+{
+    s_disp[idx].fillScreen(ST77XX_BLACK);
+    s_disp[idx].setTextColor(ST77XX_WHITE);
+
+    for (uint8_t lineIdx = 0; lineIdx < EASTER_EGG_MAX_LINES; lineIdx++)
+    {
+        const EasterEggTextLine& line = snapshot.lines[lineIdx];
+        s_disp[idx].setTextSize(line.textSizeX, line.textSizeY);
+        s_disp[idx].setCursor(line.x, line.y);
+        s_disp[idx].print(line.text);
+    }
 }

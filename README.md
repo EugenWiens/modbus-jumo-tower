@@ -82,6 +82,7 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `28` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
 | `29` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
 | `30` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
+| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` melts text, `2` starts Tetromino, `3` launches the temperature rocket, `4` starts the Modbus packet journey, `5` starts the oscilloscope animation, `6` starts Matrix rain, `7` starts the debug console, `8` starts the pixel parade, `9` starts the PCB trace animation, and `10` starts the rotating JUMO logo on all displays. |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
@@ -123,6 +124,33 @@ mbpoll -m rtu -a 1 -b 115200 -P none \
 ```
 
 Display text registers (`0`–`23`) are ignored while climate mode is active. To restore normal text mode, write `0xFFFF` to both temperature registers (`24` and `25`).
+
+### Easter Eggs
+
+Writing an Egg ID to register `31` starts it simultaneously on all three displays. The firmware processes every non-zero value as a command and immediately resets the register to `0`, so writing the same ID again starts a new animation. Unknown IDs are ignored after the reset.
+
+| ID | Effect |
+|----|--------|
+| `1` | Melts the currently visible text downward for 10 seconds. Text and climate views are both supported. |
+| `2` | Runs a 10-second Tetromino animation: a four-block piece falls into a gap, completes four rows, and clears them. |
+| `3` | Runs a 10-second temperature rocket: a gauge heats from `20C` to `99C`, followed by a countdown and launch. |
+| `4` | Runs a 10-second Modbus packet journey: a `01 03` packet travels from node 1 to node 3 and ends with `CRC OK`. |
+| `5` | Runs a 10-second oscilloscope animation with a trigger line and a phase-shifted signal on each display. |
+| `6` | Runs 10 seconds of Matrix-style character rain; `JUMO` appears twice in the center of the falling characters. |
+| `7` | Runs a 10-second debug console: DEV, TEST, and SHIP log a playful build before reaching `STATUS: LEGENDARY`. |
+| `8` | Runs a 10-second abstract pixel parade: signal sprites march while a blue JUMO defender fires light pulses. |
+| `9` | Runs a 10-second PCB trace animation: blue paths grow toward a central JUMO chip before bright pulses travel across the connected circuit. |
+| `10` | Runs a 10-second rotating blue JUMO logo on a white background. |
+
+While an Egg is running, updates to the display or climate registers are retained. When it finishes, each display renders the latest underlying view.
+
+Use FC06 to start the melting-text Egg with `mbpoll`:
+
+```bash
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 31 -t 4 -1 \
+	/dev/ttyACM0 1
+```
 
 ## Debug output
 
