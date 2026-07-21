@@ -67,6 +67,7 @@ constexpr uint16_t EASTER_EGG_MODBUS_PACKET = 4;
 constexpr uint16_t EASTER_EGG_OSCILLOSCOPE = 5;
 constexpr uint16_t EASTER_EGG_MATRIX_RAIN = 6;
 constexpr uint16_t EASTER_EGG_DEBUG_CONSOLE = 7;
+constexpr uint16_t EASTER_EGG_PIXEL_PARADE = 8;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
 #ifdef USE_TINYUSB

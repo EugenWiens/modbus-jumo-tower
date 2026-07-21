@@ -7,6 +7,7 @@
 #include "melting_text_easter_egg.h"
 #include "modbus_packet_easter_egg.h"
 #include "oscilloscope_easter_egg.h"
+#include "pixel_parade_easter_egg.h"
 #include "temperature_rocket_easter_egg.h"
 #include "tetris_easter_egg.h"
 
@@ -19,6 +20,7 @@ ModbusPacketEasterEgg s_modbusPacketEasterEgg;
 OscilloscopeEasterEgg s_oscilloscopeEasterEgg;
 MatrixRainEasterEgg s_matrixRainEasterEgg;
 DebugConsoleEasterEgg s_debugConsoleEasterEgg;
+PixelParadeEasterEgg s_pixelParadeEasterEgg;
 }
 
 EasterEgg* EasterEggFactory::create(uint16_t eggId)
@@ -50,6 +52,10 @@ EasterEgg* EasterEggFactory::create(uint16_t eggId)
     if (eggId == EASTER_EGG_DEBUG_CONSOLE)
     {
         return &s_debugConsoleEasterEgg;
+    }
+    if (eggId == EASTER_EGG_PIXEL_PARADE)
+    {
+        return &s_pixelParadeEasterEgg;
     }
 
     return nullptr;
