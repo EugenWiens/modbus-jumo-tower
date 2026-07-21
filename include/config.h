@@ -62,6 +62,7 @@ constexpr uint8_t REG_EASTER_EGG = 31;
 constexpr uint16_t EASTER_EGG_NONE = 0;
 constexpr uint16_t EASTER_EGG_MELTING_TEXT = 1;
 constexpr uint16_t EASTER_EGG_TETRIS = 2;
+constexpr uint16_t EASTER_EGG_TEMPERATURE_ROCKET = 3;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
 #ifdef USE_TINYUSB
