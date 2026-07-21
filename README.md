@@ -82,6 +82,7 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `28` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
 | `29` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
 | `30` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
+| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` starts the melting-text animation on all displays. |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
@@ -123,6 +124,24 @@ mbpoll -m rtu -a 1 -b 115200 -P none \
 ```
 
 Display text registers (`0`–`23`) are ignored while climate mode is active. To restore normal text mode, write `0xFFFF` to both temperature registers (`24` and `25`).
+
+### Easter Eggs
+
+Writing an Egg ID to register `31` starts it simultaneously on all three displays. The firmware processes every non-zero value as a command and immediately resets the register to `0`, so writing the same ID again starts a new animation. Unknown IDs are ignored after the reset.
+
+| ID | Effect |
+|----|--------|
+| `1` | Melts the currently visible text downward for 10 seconds. Text and climate views are both supported. |
+
+While an Egg is running, updates to the display or climate registers are retained. When it finishes, each display renders the latest underlying view.
+
+Use FC06 to start the melting-text Egg with `mbpoll`:
+
+```bash
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 31 -t 4 -1 \
+	/dev/ttyACM0 1
+```
 
 ## Debug output
 

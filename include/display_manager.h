@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#include "config.h"
+#include "easter_egg.h"
+
 class DisplayManager
 {
    public:
@@ -21,4 +24,17 @@ class DisplayManager
 
     // Shows temperature above relative humidity. Temperature uses the larger font.
     void showClimate(uint8_t idx, float tempC, float humidityPercent);
+
+    // Starts the requested animation on all displays. Returns false for unknown IDs.
+    bool startEasterEgg(uint16_t eggId, uint32_t nowMs);
+    // Renders the next animation frame when necessary and restores the base view after completion.
+    void updateEasterEgg(uint32_t nowMs);
+
+   private:
+    void setBaseSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot);
+    void renderSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot) const;
+
+    EasterEggDisplaySnapshot _baseSnapshots[MAX_DISPLAY_COUNT] = {};
+    EasterEgg* _activeEasterEgg = nullptr;
+    uint32_t _lastEasterEggFrameMs = 0;
 };

@@ -22,7 +22,7 @@ constexpr uint8_t MOTOR_PIN = 16;
 constexpr uint8_t MODBUS_UNIT_ID = 1;
 constexpr uint32_t MODBUS_BAUD = 115200;
 constexpr uint8_t MODBUS_NUM_COILS = 1;
-constexpr uint8_t MODBUS_NUM_REGS = 31;  // 24 display + 2 temperature + 2 humidity + 3 version
+constexpr uint8_t MODBUS_NUM_REGS = 32;  // 24 display + 2 temperature + 2 humidity + 3 version + 1 Easter Egg
 
 // Coil indices
 constexpr uint8_t COIL_MOTOR = 0;
@@ -55,6 +55,12 @@ constexpr uint16_t TEMP_REG_DISABLED = 0xFFFFU;
 constexpr uint8_t REG_VERSION_MAJOR = 28;
 constexpr uint8_t REG_VERSION_MINOR = 29;
 constexpr uint8_t REG_VERSION_PATCH = 30;
+
+// Easter Egg command register (FC03 read / FC06 or FC16 write).
+// The firmware resets a non-zero command to 0 after processing it.
+constexpr uint8_t REG_EASTER_EGG = 31;
+constexpr uint16_t EASTER_EGG_NONE = 0;
+constexpr uint16_t EASTER_EGG_MELTING_TEXT = 1;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
 #ifdef USE_TINYUSB
