@@ -82,7 +82,7 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `28` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
 | `29` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
 | `30` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
-| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` melts text, `2` starts Tetromino, and `3` launches the temperature rocket on all displays. |
+| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` melts text, `2` starts Tetromino, `3` launches the temperature rocket, and `4` starts the Modbus packet journey on all displays. |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
@@ -134,6 +134,7 @@ Writing an Egg ID to register `31` starts it simultaneously on all three display
 | `1` | Melts the currently visible text downward for 10 seconds. Text and climate views are both supported. |
 | `2` | Runs a 10-second Tetromino animation: a four-block piece falls into a gap, completes four rows, and clears them. |
 | `3` | Runs a 10-second temperature rocket: a gauge heats from `20C` to `99C`, followed by a countdown and launch. |
+| `4` | Runs a 10-second Modbus packet journey: a `01 03` packet travels from node 1 to node 3 and ends with `CRC OK`. |
 
 While an Egg is running, updates to the display or climate registers are retained. When it finishes, each display renders the latest underlying view.
 
