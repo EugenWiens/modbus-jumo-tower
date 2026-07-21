@@ -11,6 +11,7 @@
 #include "pcb_traces_easter_egg.h"
 #include "temperature_rocket_easter_egg.h"
 #include "tetris_easter_egg.h"
+#include "rotating_jumo_logo_easter_egg.h"
 
 namespace
 {
@@ -23,6 +24,7 @@ MatrixRainEasterEgg s_matrixRainEasterEgg;
 DebugConsoleEasterEgg s_debugConsoleEasterEgg;
 PixelParadeEasterEgg s_pixelParadeEasterEgg;
 PcbTracesEasterEgg s_pcbTracesEasterEgg;
+RotatingJumoLogoEasterEgg s_rotatingJumoLogoEasterEgg;
 }
 
 EasterEgg* EasterEggFactory::create(uint16_t eggId)
@@ -62,6 +64,10 @@ EasterEgg* EasterEggFactory::create(uint16_t eggId)
     if (eggId == EASTER_EGG_PCB_TRACES)
     {
         return &s_pcbTracesEasterEgg;
+    }
+    if (eggId == EASTER_EGG_ROTATING_JUMO_LOGO)
+    {
+        return &s_rotatingJumoLogoEasterEgg;
     }
 
     return nullptr;

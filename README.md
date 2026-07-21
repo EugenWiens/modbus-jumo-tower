@@ -82,7 +82,7 @@ The firmware version is injected automatically from the latest Git tag via `get_
 | `28` | `REG_VERSION_MAJOR` | R | Firmware version — major component |
 | `29` | `REG_VERSION_MINOR` | R | Firmware version — minor component |
 | `30` | `REG_VERSION_PATCH` | R | Firmware version — patch component |
-| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` melts text, `2` starts Tetromino, `3` launches the temperature rocket, `4` starts the Modbus packet journey, `5` starts the oscilloscope animation, `6` starts Matrix rain, `7` starts the debug console, `8` starts the pixel parade, and `9` starts the PCB trace animation on all displays. |
+| `31` | `REG_EASTER_EGG` | R/W command | Self-resetting Easter Egg command. `1` melts text, `2` starts Tetromino, `3` launches the temperature rocket, `4` starts the Modbus packet journey, `5` starts the oscilloscope animation, `6` starts Matrix rain, `7` starts the debug console, `8` starts the pixel parade, `9` starts the PCB trace animation, and `10` starts the rotating JUMO logo on all displays. |
 
 ¹ **Text encoding:** each register holds two ASCII characters — high byte is the first character, low byte is the second. Four consecutive registers form one 8-character display line. Write null bytes (`0x00`) to pad shorter strings.
 
@@ -140,6 +140,7 @@ Writing an Egg ID to register `31` starts it simultaneously on all three display
 | `7` | Runs a 10-second debug console: DEV, TEST, and SHIP log a playful build before reaching `STATUS: LEGENDARY`. |
 | `8` | Runs a 10-second abstract pixel parade: signal sprites march while a blue JUMO defender fires light pulses. |
 | `9` | Runs a 10-second PCB trace animation: blue paths grow toward a central JUMO chip before bright pulses travel across the connected circuit. |
+| `10` | Runs a 10-second rotating blue JUMO logo on a white background. |
 
 While an Egg is running, updates to the display or climate registers are retained. When it finishes, each display renders the latest underlying view.
 

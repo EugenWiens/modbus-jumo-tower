@@ -69,6 +69,7 @@ constexpr uint16_t EASTER_EGG_MATRIX_RAIN = 6;
 constexpr uint16_t EASTER_EGG_DEBUG_CONSOLE = 7;
 constexpr uint16_t EASTER_EGG_PIXEL_PARADE = 8;
 constexpr uint16_t EASTER_EGG_PCB_TRACES = 9;
+constexpr uint16_t EASTER_EGG_ROTATING_JUMO_LOGO = 10;
 
 // ── Debug Serial (2nd USB CDC, /dev/ttyACM1) ──────────────────────────────────
 #ifdef USE_TINYUSB
