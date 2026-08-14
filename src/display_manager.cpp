@@ -4,6 +4,7 @@
 #include <Adafruit_ST7735.h>
 #include <SPI.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "config.h"
 #include "easter_egg_factory.h"
@@ -14,6 +15,108 @@ static Adafruit_ST7735 s_disp[MAX_DISPLAY_COUNT] = {
     Adafruit_ST7735(DISP_CS_PINS[1], DISP_DC_PIN, -1),
     Adafruit_ST7735(DISP_CS_PINS[2], DISP_DC_PIN, -1),
 };
+
+struct TextBounds
+{
+    int32_t left;
+    int32_t top;
+    int32_t right;
+    int32_t bottom;
+    bool valid;
+};
+
+static bool equalTextLine(const EasterEggTextLine& first, const EasterEggTextLine& second)
+{
+    return strcmp(first.text, second.text) == 0 && first.textSizeX == second.textSizeX &&
+           first.textSizeY == second.textSizeY && first.x == second.x && first.y == second.y;
+}
+
+static bool equalSnapshot(const EasterEggDisplaySnapshot& first,
+                          const EasterEggDisplaySnapshot& second)
+{
+    for (uint8_t lineIdx = 0; lineIdx < EASTER_EGG_MAX_LINES; lineIdx++)
+    {
+        if (!equalTextLine(first.lines[lineIdx], second.lines[lineIdx]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+static TextBounds getTextBounds(Adafruit_ST7735& display, const EasterEggTextLine& line)
+{
+    if (line.text[0] == '\0')
+    {
+        return {0, 0, 0, 0, false};
+    }
+
+    display.setTextSize(line.textSizeX, line.textSizeY);
+    int16_t x1;
+    int16_t y1;
+    uint16_t width;
+    uint16_t height;
+    display.getTextBounds(line.text, line.x, line.y, &x1, &y1, &width, &height);
+    return {x1, y1, static_cast<int32_t>(x1) + width, static_cast<int32_t>(y1) + height, true};
+}
+
+static void clearTextBounds(Adafruit_ST7735& display, const TextBounds& first,
+                            const TextBounds& second)
+{
+    if (!first.valid && !second.valid)
+    {
+        return;
+    }
+
+    int32_t left = first.valid ? first.left : second.left;
+    int32_t top = first.valid ? first.top : second.top;
+    int32_t right = first.valid ? first.right : second.right;
+    int32_t bottom = first.valid ? first.bottom : second.bottom;
+    if (second.valid)
+    {
+        if (second.left < left)
+        {
+            left = second.left;
+        }
+        if (second.top < top)
+        {
+            top = second.top;
+        }
+        if (second.right > right)
+        {
+            right = second.right;
+        }
+        if (second.bottom > bottom)
+        {
+            bottom = second.bottom;
+        }
+    }
+
+    if (left < 0)
+    {
+        left = 0;
+    }
+    if (top < 0)
+    {
+        top = 0;
+    }
+    if (right > display.width())
+    {
+        right = display.width();
+    }
+    if (bottom > display.height())
+    {
+        bottom = display.height();
+    }
+    if (right <= left || bottom <= top)
+    {
+        return;
+    }
+
+    display.fillRect(static_cast<int16_t>(left), static_cast<int16_t>(top),
+                     static_cast<uint16_t>(right - left), static_cast<uint16_t>(bottom - top),
+                     ST77XX_BLACK);
+}
 
 void DisplayManager::init()
 {
@@ -40,6 +143,7 @@ void DisplayManager::init()
         s_disp[i].initR(ST7735_INIT_OPTION);
         s_disp[i].setRotation(DISP_ROTATION);
         s_disp[i].fillScreen(ST77XX_BLACK);
+        _hasRenderedSnapshot[i] = false;
     }
 }
 
@@ -50,7 +154,8 @@ void DisplayManager::showBootLogo(uint8_t idx)
         return;
     }
 
-    s_disp[idx].fillScreen(ST77XX_WHITE);
+    _hasRenderedSnapshot[idx] = false;
+    s_disp[idx].fillScreen(ST77XX_BLACK);
     drawJumoLogo(s_disp[idx], static_cast<int16_t>(s_disp[idx].width() / 2),
                  static_cast<int16_t>(s_disp[idx].height() / 2), 0.0F);
 }
@@ -223,6 +328,8 @@ void DisplayManager::updateEasterEgg(uint32_t nowMs)
         for (uint8_t displayIdx = 0; displayIdx < DISPLAY_COUNT; displayIdx++)
         {
             renderSnapshot(displayIdx, _baseSnapshots[displayIdx]);
+            _renderedSnapshots[displayIdx] = _baseSnapshots[displayIdx];
+            _hasRenderedSnapshot[displayIdx] = true;
         }
         return;
     }
@@ -242,11 +349,24 @@ void DisplayManager::updateEasterEgg(uint32_t nowMs)
 
 void DisplayManager::setBaseSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot)
 {
+    const bool needsRender = !_hasRenderedSnapshot[idx] ||
+                             !equalSnapshot(_renderedSnapshots[idx], snapshot);
     _baseSnapshots[idx] = snapshot;
-    if (_activeEasterEgg == nullptr)
+    if (_activeEasterEgg != nullptr || !needsRender)
+    {
+        return;
+    }
+
+    if (_hasRenderedSnapshot[idx])
+    {
+        renderSnapshotDifferential(idx, _renderedSnapshots[idx], snapshot);
+    }
+    else
     {
         renderSnapshot(idx, snapshot);
     }
+    _renderedSnapshots[idx] = snapshot;
+    _hasRenderedSnapshot[idx] = true;
 }
 
 void DisplayManager::renderSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot) const
@@ -260,5 +380,33 @@ void DisplayManager::renderSnapshot(uint8_t idx, const EasterEggDisplaySnapshot&
         s_disp[idx].setTextSize(line.textSizeX, line.textSizeY);
         s_disp[idx].setCursor(line.x, line.y);
         s_disp[idx].print(line.text);
+    }
+}
+
+void DisplayManager::renderSnapshotDifferential(
+    uint8_t idx, const EasterEggDisplaySnapshot& previous,
+    const EasterEggDisplaySnapshot& current) const
+{
+    s_disp[idx].setTextColor(ST77XX_WHITE);
+
+    for (uint8_t lineIdx = 0; lineIdx < EASTER_EGG_MAX_LINES; lineIdx++)
+    {
+        const EasterEggTextLine& previousLine = previous.lines[lineIdx];
+        const EasterEggTextLine& currentLine = current.lines[lineIdx];
+        if (equalTextLine(previousLine, currentLine))
+        {
+            continue;
+        }
+
+        const TextBounds previousBounds = getTextBounds(s_disp[idx], previousLine);
+        const TextBounds currentBounds = getTextBounds(s_disp[idx], currentLine);
+        clearTextBounds(s_disp[idx], previousBounds, currentBounds);
+
+        if (currentLine.text[0] != '\0')
+        {
+            s_disp[idx].setTextSize(currentLine.textSizeX, currentLine.textSizeY);
+            s_disp[idx].setCursor(currentLine.x, currentLine.y);
+            s_disp[idx].print(currentLine.text);
+        }
     }
 }

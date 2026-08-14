@@ -163,7 +163,7 @@ Writing an Egg ID to register `31` starts it simultaneously on all three display
 | `7` | Runs a 10-second debug console: DEV, TEST, and SHIP log a playful build before reaching `STATUS: LEGENDARY`. |
 | `8` | Runs a 10-second abstract pixel parade: signal sprites march while a blue JUMO defender fires light pulses. |
 | `9` | Runs a 10-second PCB trace animation: blue paths grow toward a central JUMO chip before bright pulses travel across the connected circuit. |
-| `10` | Runs a 10-second rotating blue JUMO logo on a white background. |
+| `10` | Runs a 10-second rotating blue JUMO logo on a light-gray background with a black display background. |
 
 While an Egg is running, updates to the display or climate registers are retained. When it finishes, each display renders the latest underlying view.
 

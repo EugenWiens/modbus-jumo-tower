@@ -34,7 +34,7 @@ void RotatingJumoLogoEasterEgg::renderFrame(uint8_t displayIdx, Adafruit_ST7735&
         return;
     }
 
-    display.fillScreen(ST77XX_WHITE);
+    display.fillScreen(ST77XX_BLACK);
     const float angle = ((nowMs - _startMs) % ROTATION_DURATION_MS) * FULL_ROTATION_RADIANS /
                         ROTATION_DURATION_MS;
     drawJumoLogo(display, DISP_WIDTH / 2, DISP_HEIGHT / 2, angle);

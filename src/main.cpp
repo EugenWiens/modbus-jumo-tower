@@ -16,12 +16,21 @@ static MotorControl g_motor;
 
 static bool s_prevMotor = false;
 static uint16_t s_prevRegs[MODBUS_NUM_REGS] = {0};
-static uint16_t s_prevTempHigh = TEMP_REG_DISABLED;
-static uint16_t s_prevTempLow = TEMP_REG_DISABLED;
-static uint16_t s_prevHumidityHigh = TEMP_REG_DISABLED;
-static uint16_t s_prevHumidityLow = TEMP_REG_DISABLED;
+static uint16_t s_appliedTempHigh = TEMP_REG_DISABLED;
+static uint16_t s_appliedTempLow = TEMP_REG_DISABLED;
+static uint16_t s_appliedHumidityHigh = TEMP_REG_DISABLED;
+static uint16_t s_appliedHumidityLow = TEMP_REG_DISABLED;
+static uint16_t s_pendingTempHigh = TEMP_REG_DISABLED;
+static uint16_t s_pendingTempLow = TEMP_REG_DISABLED;
+static uint16_t s_pendingHumidityHigh = TEMP_REG_DISABLED;
+static uint16_t s_pendingHumidityLow = TEMP_REG_DISABLED;
+static bool s_climatePending = false;
+static uint32_t s_climatePendingSinceMs = 0;
+static bool s_climateModeActive = false;
 static uint16_t s_ledToggleLoopCount = 0;
 static bool s_prevLedState = false;
+
+constexpr uint32_t CLIMATE_STABILIZATION_MS = 60U;
 
 static void refreshDisplay(uint8_t dispIdx)
 {
@@ -65,6 +74,7 @@ void setup()
 void loop()
 {
     g_modbus.poll();
+    const uint32_t nowMs = millis();
 
     // ── Easter Egg command register ──────────────────────────────────────────
     const uint16_t requestedEasterEgg = g_modbus.holdingRegs[REG_EASTER_EGG];
@@ -72,7 +82,7 @@ void loop()
     {
         // Commands are self-resetting so writing the same Egg ID can trigger it again.
         g_modbus.holdingRegs[REG_EASTER_EGG] = EASTER_EGG_NONE;
-        if (g_display.startEasterEgg(requestedEasterEgg, millis()))
+        if (g_display.startEasterEgg(requestedEasterEgg, nowMs))
         {
             DBG_SERIAL.printf("Easter Egg %u: started\r\n", requestedEasterEgg);
         }
@@ -81,7 +91,7 @@ void loop()
             DBG_SERIAL.printf("Easter Egg %u: unknown\r\n", requestedEasterEgg);
         }
     }
-    g_display.updateEasterEgg(millis());
+    g_display.updateEasterEgg(nowMs);
 
     if (++s_ledToggleLoopCount == 10000U)
     {
@@ -119,43 +129,65 @@ void loop()
     const uint16_t curTempLow = g_modbus.holdingRegs[REG_TEMPERATURE_LOW];
     const uint16_t curHumidityHigh = g_modbus.holdingRegs[REG_HUMIDITY_HIGH];
     const uint16_t curHumidityLow = g_modbus.holdingRegs[REG_HUMIDITY_LOW];
-    if (curTempHigh != s_prevTempHigh || curTempLow != s_prevTempLow ||
-        curHumidityHigh != s_prevHumidityHigh || curHumidityLow != s_prevHumidityLow)
+    if (curTempHigh != s_pendingTempHigh || curTempLow != s_pendingTempLow ||
+        curHumidityHigh != s_pendingHumidityHigh || curHumidityLow != s_pendingHumidityLow)
     {
-        s_prevTempHigh = curTempHigh;
-        s_prevTempLow = curTempLow;
-        s_prevHumidityHigh = curHumidityHigh;
-        s_prevHumidityLow = curHumidityLow;
-        if (g_modbus.hasTemperature())
+        s_pendingTempHigh = curTempHigh;
+        s_pendingTempLow = curTempLow;
+        s_pendingHumidityHigh = curHumidityHigh;
+        s_pendingHumidityLow = curHumidityLow;
+        s_climatePending = true;
+        s_climatePendingSinceMs = nowMs;
+    }
+
+    if (s_climatePending && nowMs - s_climatePendingSinceMs >= CLIMATE_STABILIZATION_MS)
+    {
+        s_climatePending = false;
+        const bool stableClimateChanged =
+            s_pendingTempHigh != s_appliedTempHigh || s_pendingTempLow != s_appliedTempLow ||
+            s_pendingHumidityHigh != s_appliedHumidityHigh ||
+            s_pendingHumidityLow != s_appliedHumidityLow;
+        if (stableClimateChanged)
         {
-            const float temperature = g_modbus.getTemperature();
-            const bool hasHumidity = g_modbus.hasHumidity();
-            const float humidity = g_modbus.getHumidity();
-            DBG_SERIAL.printf("Temperature mode: %.1f C%s\r\n", static_cast<double>(temperature),
-                              hasHumidity ? " with humidity" : "");
-            for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+            s_appliedTempHigh = s_pendingTempHigh;
+            s_appliedTempLow = s_pendingTempLow;
+            s_appliedHumidityHigh = s_pendingHumidityHigh;
+            s_appliedHumidityLow = s_pendingHumidityLow;
+
+            const bool hasTemperature = g_modbus.hasTemperature();
+            s_climateModeActive = hasTemperature;
+            if (hasTemperature)
             {
-                if (hasHumidity)
+                const float temperature = g_modbus.getTemperature();
+                const bool hasHumidity = g_modbus.hasHumidity();
+                const float humidity = g_modbus.getHumidity();
+                DBG_SERIAL.printf("Temperature mode: %.1f C%s\r\n",
+                                  static_cast<double>(temperature),
+                                  hasHumidity ? " with humidity" : "");
+                for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
                 {
-                    g_display.showClimate(dispIdx, temperature, humidity);
-                }
-                else
-                {
-                    g_display.showTemperature(dispIdx, temperature);
+                    if (hasHumidity)
+                    {
+                        g_display.showClimate(dispIdx, temperature, humidity);
+                    }
+                    else
+                    {
+                        g_display.showTemperature(dispIdx, temperature);
+                    }
                 }
             }
-        }
-        else
-        {
-            DBG_SERIAL.println("Temperature mode: disabled");
+            else
+            {
+                DBG_SERIAL.println("Temperature mode: disabled");
+                for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
+                {
+                    refreshDisplay(dispIdx);
+                }
+            }
             for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
             {
-                refreshDisplay(dispIdx);
+                dispChanged[dispIdx] = false;
             }
-        }
-        for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
-        {
-            dispChanged[dispIdx] = false;
         }
     }
 
@@ -167,14 +199,15 @@ void loop()
 
     if (anyDisplayChanged)
     {
-        memcpy(s_prevRegs, g_modbus.holdingRegs, sizeof(s_prevRegs));
         for (uint8_t dispIdx = 0; dispIdx < DISPLAY_COUNT; dispIdx++)
         {
-            if (dispChanged[dispIdx] && !g_modbus.hasTemperature())
+            if (dispChanged[dispIdx] && !s_climateModeActive)
             {
                 refreshDisplay(dispIdx);
                 DBG_SERIAL.printf("Display %u: text updated\r\n", dispIdx + 1U);
             }
         }
     }
+
+    memcpy(s_prevRegs, g_modbus.holdingRegs, sizeof(s_prevRegs));
 }

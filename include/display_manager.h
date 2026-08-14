@@ -34,8 +34,12 @@ class DisplayManager
    private:
     void setBaseSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot);
     void renderSnapshot(uint8_t idx, const EasterEggDisplaySnapshot& snapshot) const;
+    void renderSnapshotDifferential(uint8_t idx, const EasterEggDisplaySnapshot& previous,
+                                    const EasterEggDisplaySnapshot& current) const;
 
     EasterEggDisplaySnapshot _baseSnapshots[MAX_DISPLAY_COUNT] = {};
+    EasterEggDisplaySnapshot _renderedSnapshots[MAX_DISPLAY_COUNT] = {};
+    bool _hasRenderedSnapshot[MAX_DISPLAY_COUNT] = {};
     EasterEgg* _activeEasterEgg = nullptr;
     uint32_t _lastEasterEggFrameMs = 0;
 };
