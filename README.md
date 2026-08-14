@@ -67,6 +67,29 @@ The firmware version is injected automatically from the latest Git tag via `get_
 |---------|------|-------------|
 | `0` | `COIL_MOTOR` | `1` = motor on, `0` = motor off |
 
+Read or control the motor coil with `mbpoll`:
+
+```bash
+# Read the current motor state (FC01)
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 0 -t 0 -1 \
+	/dev/ttyACM0
+
+# Switch the motor on (FC05)
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 0 -t 0 -1 \
+	/dev/ttyACM0 1
+
+# Switch the motor off (FC05)
+mbpoll -m rtu -a 1 -b 115200 -P none \
+	-0 -r 0 -t 0 -1 \
+	/dev/ttyACM0 0
+```
+
+The `-0` option selects the firmware's zero-based address, `-r 0` selects
+`COIL_MOTOR`, and `-t 0` selects the coil data type. The final `1` or `0`
+is the value written to the coil.
+
 ### Holding Registers — FC03 read / FC06 write
 
 | Address | Name | Type | Description |
