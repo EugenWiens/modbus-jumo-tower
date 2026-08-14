@@ -50,7 +50,7 @@ void DisplayManager::showBootLogo(uint8_t idx)
         return;
     }
 
-    s_disp[idx].fillScreen(ST77XX_WHITE);
+    s_disp[idx].fillScreen(ST77XX_BLACK);
     drawJumoLogo(s_disp[idx], static_cast<int16_t>(s_disp[idx].width() / 2),
                  static_cast<int16_t>(s_disp[idx].height() / 2), 0.0F);
 }
