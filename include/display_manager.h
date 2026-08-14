@@ -10,6 +10,7 @@ class DisplayManager
 {
    public:
     void init();
+    void showBootLogo(uint8_t idx);
 
     // idx: 0 = Display 1, 1 = Display 2, 2 = Display 3
     // line1/line2: null-terminated strings, max 8 chars each

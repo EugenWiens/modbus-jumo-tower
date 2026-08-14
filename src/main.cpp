@@ -41,11 +41,12 @@ void setup()
     DBG_SERIAL.println("Starting JUMO Tower");
 
     g_display.init();
-    g_display.showLargeText(0, 4, "Hallo", "Harald");
+    g_display.showBootLogo(DISPLAY_LEFT_INDEX);
+    g_display.showLargeText(DISPLAY_FRONT_INDEX, 4, "Hallo", "Harald");
     char firmwareVersion[16];
     snprintf(firmwareVersion, sizeof(firmwareVersion), "%d.%d.%d", FIRMWARE_VERSION_MAJOR,
              FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH);
-    g_display.showLargeText(1, 2, "SW Version", firmwareVersion);
+    g_display.showLargeText(DISPLAY_RIGHT_INDEX, 2, "SW Version", firmwareVersion);
     DBG_SERIAL.printf("Displays initialized: %u ST7735 TFTs\r\n", DISPLAY_COUNT);
     g_motor.init(MOTOR_PIN);
     DBG_SERIAL.printf("Motor initialized: GPIO %u\r\n", MOTOR_PIN);

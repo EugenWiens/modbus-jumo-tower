@@ -6,6 +6,9 @@
 // ── ST7735 Displays (shared SPI bus) ──────────────────────────────────────────
 constexpr uint8_t DISPLAY_COUNT = 3;
 constexpr uint8_t MAX_DISPLAY_COUNT = 3;  // for array sizing, not used in code
+constexpr uint8_t DISPLAY_RIGHT_INDEX = 0;
+constexpr uint8_t DISPLAY_FRONT_INDEX = 1;
+constexpr uint8_t DISPLAY_LEFT_INDEX = 2;
 constexpr uint8_t DISP_WIDTH = 160;
 constexpr uint8_t DISP_HEIGHT = 128;
 constexpr uint8_t DISP_ROTATION = 1;  // 0 = portrait, 1 = landscape, 2 = portrait flipped, 3 = landscape flipped

@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "easter_egg_factory.h"
+#include "jumo_logo.h"
 
 static Adafruit_ST7735 s_disp[MAX_DISPLAY_COUNT] = {
     Adafruit_ST7735(DISP_CS_PINS[0], DISP_DC_PIN, -1),
@@ -40,6 +41,18 @@ void DisplayManager::init()
         s_disp[i].setRotation(DISP_ROTATION);
         s_disp[i].fillScreen(ST77XX_BLACK);
     }
+}
+
+void DisplayManager::showBootLogo(uint8_t idx)
+{
+    if (idx >= DISPLAY_COUNT)
+    {
+        return;
+    }
+
+    s_disp[idx].fillScreen(ST77XX_WHITE);
+    drawJumoLogo(s_disp[idx], static_cast<int16_t>(s_disp[idx].width() / 2),
+                 static_cast<int16_t>(s_disp[idx].height() / 2), 0.0F);
 }
 
 void DisplayManager::update(uint8_t idx, const char* line1, const char* line2)
