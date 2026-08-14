@@ -4,8 +4,8 @@
 from PIL import Image, ImageDraw, ImageFont
 
 # ── Fonts ────────────────────────────────────────────────────────────────────
-FONT_REGULAR = "/usr/share/fonts/adwaita-sans-fonts/AdwaitaSans-Regular.ttf"
-FONT_BOLD    = "/usr/share/fonts/google-droid-sans-fonts/DroidSans-Bold.ttf"
+FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+FONT_BOLD    = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 def font(size, bold=False):
     return ImageFont.truetype(FONT_BOLD if bold else FONT_REGULAR, size)
@@ -158,7 +158,7 @@ pins = [
     ("27","GP21","RST / RES",     C_RST),
     ("36","3V3", "Display VCC",   C_PWR),
     ("38","GND", "Common GND",    C_GND),
-    ("21","GP16","Motor output",  C_MOTOR),
+    ("22","GP17","Motor output",  C_MOTOR),
 ]
 
 for i,(nr,gpio,sig,c) in enumerate(pins):
@@ -238,7 +238,7 @@ vl(mot_entry_x, MOT_TOP_Y,  M_Y1,       C_MOTOR, w=2)   # down into box
 arrowhead_down(mot_entry_x, M_Y1, C_MOTOR)
 
 # small label on top horizontal segment
-txt(MOT_UP_X + 8, MOT_TOP_Y - 2, "GP16  Motor signal",
+txt(MOT_UP_X + 8, MOT_TOP_Y - 2, "GP17  Motor signal",
     sz=10, c=C_MOTOR, anc="lb")
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ txt((M_X1+M_X2)//2, M_Y1+10, "Motor Driver Circuit",
     sz=14, bold=True, c=BOX_MOTOR_BD, anc="mt")
 
 motor_lines = [
-    ("IN  ← GP16  (3.3 V logic)",  C_MOTOR),
+    ("IN  ← GP17  (3.3 V logic)",  C_MOTOR),
     ("",                            TXT),
     ("NPN / N-MOSFET or relay",     BOX_MOTOR_BD),
     ("  module with driver",        BOX_MOTOR_BD),
@@ -329,7 +329,7 @@ LY = H - LEG_H + 8
 txt(14, LY, "Legend:", sz=11, bold=True, c=TXT)
 items = [("SCK",C_SCK),("MOSI",C_MOSI),("DC",C_DC),("RST",C_RST),
          ("VCC",C_PWR),("GND",C_GND),("CS1",C_CS1),("CS2",C_CS2),
-         ("CS3",C_CS3),("GP16 Motor",C_MOTOR)]
+         ("CS3",C_CS3),("GP17 Motor",C_MOTOR)]
 for i,(lbl,c) in enumerate(items):
     ox = 80 + i * 155
     d.rectangle([s(ox), s(LY+4), s(ox+28), s(LY+15)], fill=c)

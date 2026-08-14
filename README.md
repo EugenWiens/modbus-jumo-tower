@@ -13,7 +13,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 | Displays | 3 x ST7735 TFT, 128x160 pixels, shared SPI bus |
 | SPI bus | SCK = GPIO 18, MOSI = GPIO 19 |
 | Display control | CS1 = GPIO 13, CS2 = GPIO 14, CS3 = GPIO 15, DC = GPIO 20, Reset = GPIO 21 |
-| Motor output | GPIO 16 (digital on/off) |
+| Motor output | GPIO 17 (digital on/off) |
 | Modbus transport | USB CDC-ACM (`/dev/ttyACM0`), 115200 baud |
 | Debug output | Second USB CDC-ACM interface (`/dev/ttyACM1`), 115200 baud |
 
@@ -29,7 +29,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 | 17 | GP13 | TFT CS1 | CS on ST7735 #1 |
 | 19 | GP14 | TFT CS2 | CS on ST7735 #2 |
 | 20 | GP15 | TFT CS3 | CS on ST7735 #3 |
-| 21 | GP16 | Motor OUT | Base/Gate of driver transistor / relay IN |
+| 22 | GP17 | Motor OUT | Base/Gate of driver transistor / relay IN |
 | 24 | GP18 | SPI SCK | SCK on all ST7735 modules |
 | 25 | GP19 | SPI MOSI | MOSI/SDA on all ST7735 modules |
 | 26 | GP20 | TFT DC | DC/A0 on all ST7735 modules |
@@ -41,7 +41,7 @@ The USB device enumerates as **JUMO / JUMO Tower**.
 
 - **SPI connections:** connect `SCK`, `MOSI` (sometimes labelled `SDA`), `DC` (sometimes `A0`) and `RST`/`RES` to all three modules. Connect each module's `CS` only to its assigned Pico GPIO. `MISO` is not required.
 - **Display variant:** the firmware uses the `INITR_GREENTAB` initialization for common 1.8-inch 128x160 modules. If the visible image is shifted, adjust `ST7735_INIT_OPTION` in [include/config.h](include/config.h) for the tab variant of the module.
-- **Motor driver:** GP16 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
+- **Motor driver:** GP17 is a 3.3 V logic output. Use an NPN transistor, N-MOSFET, or a relay module with built-in driver. Add a **flyback diode** (e.g. 1N4007) across inductive loads.
 - **Power:** three backlit TFT modules can exceed the current available from the Pico's 3V3 rail. Use a sufficiently rated 3.3 V supply when needed and always connect its ground to Pico GND.
 
 ## Build

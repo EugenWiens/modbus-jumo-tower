@@ -16,7 +16,7 @@ constexpr uint8_t DISP_DC_PIN = 20;
 constexpr uint8_t DISP_RST_PIN = 21;
 constexpr uint8_t ST7735_INIT_OPTION = 0x00;  // INITR_GREENTAB (colstart=2, rowstart=1 fixes pixel-snow on ST7735S clones)
 // ── Motor GPIO ────────────────────────────────────────────────────────────────
-constexpr uint8_t MOTOR_PIN = 16;
+constexpr uint8_t MOTOR_PIN = 17;
 
 // ── Modbus ────────────────────────────────────────────────────────────────────
 constexpr uint8_t MODBUS_UNIT_ID = 1;
